@@ -264,6 +264,12 @@ html, body {
   color: white;
 }
 
+.workout-card.today {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--bg3) 0%, rgba(249,115,22,0.06) 100%);
+}
+.workout-card.today::before { background: var(--accent); }
+
 /* ===== TRAINING SCREEN ===== */
 #training-screen {
   padding: 0;
@@ -498,59 +504,9 @@ html, body {
 
 .chip-val { color: var(--text2); }
 
-/* ===== REST TIMER ===== */
-#rest-timer {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%) translateY(100px);
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 18px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  z-index: 200;
-  box-shadow: var(--shadow);
-  min-width: 260px;
-  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-}
 
-#rest-timer.visible {
-  transform: translateX(-50%) translateY(0);
-}
 
-.timer-display {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 36px;
-  font-weight: 800;
-  color: var(--accent);
-  min-width: 70px;
-  line-height: 1;
-}
 
-.timer-display.warning { color: var(--red); }
-
-.timer-controls { display: flex; gap: 6px; flex-direction: column; }
-
-.timer-btn {
-  background: var(--bg4);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 6px;
-  padding: 5px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  font-family: 'Barlow Condensed', sans-serif;
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-.timer-btn:active { background: var(--bg3); }
-.timer-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
-
-.timer-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; }
 
 /* ===== DASHBOARD SCREEN ===== */
 .dash-filters {
@@ -937,7 +893,7 @@ html, body {
     <div class="logo">Iron<span>Log</span></div>
     <div class="header-right">
       <div class="week-badge" id="header-week-badge">SEM 1</div>
-      <div class="icon-btn" id="timer-toggle-btn" title="Cronômetro">⏱</div>
+
     </div>
   </div>
 
@@ -1071,19 +1027,6 @@ html, body {
 
 </div>
 
-<!-- REST TIMER -->
-<div id="rest-timer">
-  <div>
-    <div class="timer-label">Descanso</div>
-    <div class="timer-display" id="timer-display">01:30</div>
-  </div>
-  <div class="timer-controls">
-    <button class="timer-btn primary" id="timer-start-stop">▶ Start</button>
-    <button class="timer-btn" id="timer-reset">⟳ Reset</button>
-  </div>
-  <button class="timer-btn" id="timer-close" style="position:absolute;top:8px;right:8px;width:24px;height:24px;padding:0;font-size:12px">✕</button>
-</div>
-
 <!-- TOAST -->
 <div id="toast">Salvo!</div>
 
@@ -1103,6 +1046,7 @@ const DEFAULT_DATA = {
     {
       id: 'w1',
       name: 'Pernas — Quadríceps',
+      day: 'Segunda',
       exercises: [
         { id: 'e1_1', name: 'Extensora' },
         { id: 'e1_2', name: 'Avanço' },
@@ -1114,6 +1058,7 @@ const DEFAULT_DATA = {
     {
       id: 'w2',
       name: 'Push',
+      day: 'Terça',
       exercises: [
         { id: 'e2_1', name: 'Supino Declinado c/ Halt.' },
         { id: 'e2_2', name: 'Elevação Lateral' },
@@ -1127,6 +1072,7 @@ const DEFAULT_DATA = {
     {
       id: 'w3',
       name: 'Pull',
+      day: 'Quarta',
       exercises: [
         { id: 'e3_1', name: 'Puxada Unilateral' },
         { id: 'e3_2', name: 'Remada Pronada Upper Back' },
@@ -1139,6 +1085,7 @@ const DEFAULT_DATA = {
     {
       id: 'w4',
       name: 'Posterior e Glúteos',
+      day: 'Quinta',
       exercises: [
         { id: 'e4_1', name: 'Agachamento Livre' },
         { id: 'e4_2', name: 'Mesa Flexora / Unilat.' },
@@ -1150,6 +1097,7 @@ const DEFAULT_DATA = {
     {
       id: 'w5',
       name: 'Peito e Costas',
+      day: 'Sexta',
       exercises: [
         { id: 'e5_1', name: 'Supino Inclinado Smith' },
         { id: 'e5_2', name: 'Remada Baixa Inclinada' },
@@ -1162,6 +1110,7 @@ const DEFAULT_DATA = {
     {
       id: 'w6',
       name: 'Ombros e Braços',
+      day: 'Sábado',
       exercises: [
         { id: 'e6_1', name: 'Desenvolvimento Ombros' },
         { id: 'e6_2', name: 'Fly Invertido Maq.' },
@@ -1397,22 +1346,32 @@ function renderStats() {
   `;
 }
 
+function getTodayWorkoutDay() {
+  const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  return days[new Date().getDay()];
+}
+
 function renderWorkoutGrid() {
   const week = state.currentWeek;
   const grid = document.getElementById('workout-grid');
+  const todayDay = getTodayWorkoutDay();
   grid.innerHTML = state.workouts.map((w, i) => {
     const isDone = state.weeklyDone[`${w.id}_w${week}`];
+    const isToday = w.day === todayDay;
     const loggedExs = w.exercises.filter(ex => {
       const l = getLog(w.id, ex.id, week);
       return l.reps || l.weight;
     }).length;
     const colors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308'];
     return `
-      <div class="workout-card ${isDone ? 'done' : ''}" data-wid="${w.id}">
+      <div class="workout-card ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}" data-wid="${w.id}">
         <div class="workout-num" style="${isDone ? '' : `color:${colors[i]};opacity:0.4`}">${String(i+1).padStart(2,'0')}</div>
         <div class="workout-info">
-          <div class="workout-name">${w.name}</div>
-          <div class="workout-meta">${w.exercises.length} exercícios · ${loggedExs}/${w.exercises.length} anotados</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="workout-name">${w.name}</div>
+            ${isToday ? '<span class="badge badge-orange">HOJE</span>' : ''}
+          </div>
+          <div class="workout-meta">${w.day || ''} &middot; ${w.exercises.length} exercícios &middot; ${loggedExs}/${w.exercises.length} anotados</div>
           <div class="progress-bar-bg"><div class="progress-bar" style="width:${w.exercises.length > 0 ? (loggedExs/w.exercises.length*100) : 0}%;background:${colors[i]}"></div></div>
         </div>
         <div class="workout-check">${isDone ? '✓' : ''}</div>
@@ -1530,100 +1489,11 @@ function renderExercises() {
       showToast('Salvo! 💪');
       // Close body
       card.querySelector('.exercise-body').classList.remove('open');
-      // Auto start timer
-      startTimer();
     });
   });
 }
 
-// ============================================================
-// REST TIMER
-// ============================================================
-let timerInterval = null;
-let timerSeconds = 90;
-let timerRunning = false;
-let timerVisible = false;
 
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-}
-
-function updateTimerDisplay() {
-  const el = document.getElementById('timer-display');
-  el.textContent = formatTime(timerSeconds);
-  el.classList.toggle('warning', timerSeconds <= 10 && timerRunning);
-}
-
-function startTimer() {
-  if (!timerVisible) toggleTimer(true);
-  timerSeconds = 90;
-  timerRunning = false;
-  updateTimerDisplay();
-  clearInterval(timerInterval);
-  // Auto start
-  timerRunning = true;
-  document.getElementById('timer-start-stop').textContent = '⏸ Pause';
-  timerInterval = setInterval(() => {
-    if (timerSeconds > 0) {
-      timerSeconds--;
-      updateTimerDisplay();
-      if (timerSeconds === 0) {
-        clearInterval(timerInterval);
-        timerRunning = false;
-        document.getElementById('timer-start-stop').textContent = '▶ Start';
-        // Vibrate if available
-        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-        document.getElementById('timer-display').classList.add('warning');
-      }
-    }
-  }, 1000);
-}
-
-function toggleTimer(force) {
-  timerVisible = force !== undefined ? force : !timerVisible;
-  document.getElementById('rest-timer').classList.toggle('visible', timerVisible);
-}
-
-document.getElementById('timer-toggle-btn').addEventListener('click', () => toggleTimer());
-document.getElementById('timer-close').addEventListener('click', () => {
-  toggleTimer(false);
-  clearInterval(timerInterval);
-  timerRunning = false;
-});
-
-document.getElementById('timer-start-stop').addEventListener('click', () => {
-  if (timerRunning) {
-    clearInterval(timerInterval);
-    timerRunning = false;
-    document.getElementById('timer-start-stop').textContent = '▶ Start';
-  } else {
-    timerRunning = true;
-    document.getElementById('timer-start-stop').textContent = '⏸ Pause';
-    timerInterval = setInterval(() => {
-      if (timerSeconds > 0) {
-        timerSeconds--;
-        updateTimerDisplay();
-        if (timerSeconds === 0) {
-          clearInterval(timerInterval);
-          timerRunning = false;
-          document.getElementById('timer-start-stop').textContent = '▶ Start';
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-        }
-      }
-    }, 1000);
-  }
-});
-
-document.getElementById('timer-reset').addEventListener('click', () => {
-  clearInterval(timerInterval);
-  timerRunning = false;
-  timerSeconds = 90;
-  updateTimerDisplay();
-  document.getElementById('timer-start-stop').textContent = '▶ Start';
-  document.getElementById('timer-display').classList.remove('warning');
-});
 
 // ============================================================
 // DASHBOARD
@@ -2046,7 +1916,6 @@ function showToast(msg) {
 // ============================================================
 loadState();
 checkStorageWarning();
-updateTimerDisplay();
 renderHome();
 
 </script>

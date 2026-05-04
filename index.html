@@ -161,6 +161,76 @@ html, body {
 .screen.active { display: block; }
 
 /* ===== HOME SCREEN ===== */
+
+/* Hero card */
+.hero-card {
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 18px 16px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.hero-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--accent);
+}
+.hero-card:active { transform: scale(0.99); }
+
+.hero-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+.hero-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+.hero-meta { font-size: 12px; color: var(--text3); }
+.hero-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.hero-rest {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.hero-rest-emoji { font-size: 32px; margin-bottom: 6px; }
+.hero-rest-title { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; color: var(--green); }
+.hero-rest-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* Stats row */
 .home-stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -187,6 +257,138 @@ html, body {
 
 .stat-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
+/* Weekly progress bar */
+.week-progress-wrap {
+  margin-bottom: 20px;
+}
+.week-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.week-progress-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+.week-progress-count {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+.week-progress-count span {
+  font-size: 13px;
+  color: var(--text3);
+  font-weight: 600;
+}
+.week-progress-track {
+  background: var(--bg4);
+  border-radius: 6px;
+  height: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.week-progress-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--accent), #fb923c);
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+.week-progress-fill.complete {
+  background: linear-gradient(90deg, var(--green), #4ade80);
+}
+.week-progress-segments {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.week-progress-seg {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.week-progress-seg.done {
+  background: var(--accent);
+}
+.week-progress-seg.done.complete {
+  background: var(--green);
+}
+
+/* Weekly heatmap */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.heatmap-cell {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 6px;
+  text-align: center;
+}
+.heatmap-cell.done { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.3); }
+.heatmap-cell.today { border-color: var(--accent); }
+.heatmap-week {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.heatmap-dots { display: flex; justify-content: center; gap: 3px; flex-wrap: wrap; }
+.heatmap-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+}
+.heatmap-dot.done { background: var(--green); }
+.heatmap-dot.today-dot { background: var(--accent); }
+
+/* Recent activity */
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.recent-icon {
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  background: var(--bg4);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.recent-info { flex: 1; min-width: 0; }
+.recent-ex { font-weight: 600; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-workout { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.recent-val {
+  text-align: right;
+  flex-shrink: 0;
+}
+.recent-weight { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; color: var(--accent); line-height: 1; }
+.recent-reps { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
 .section-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 13px;
@@ -195,6 +397,192 @@ html, body {
   text-transform: uppercase;
   letter-spacing: 2px;
   margin-bottom: 10px;
+}
+
+/* ===== CARDIO SCREEN ===== */
+.cardio-day-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.cardio-day-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  gap: 12px;
+}
+.cardio-day-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  min-width: 70px;
+}
+.cardio-day-workout {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text3);
+}
+.cardio-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.cardio-toggle-label {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 600;
+}
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.toggle-switch input { display: none; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--text3);
+  top: 2px;
+  left: 2px;
+  transition: all 0.25s;
+}
+.toggle-switch input:checked + .toggle-track {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+.toggle-switch input:checked + .toggle-track::after {
+  background: var(--accent);
+  transform: translateX(20px);
+}
+.cardio-body {
+  display: none;
+  padding: 0 16px 14px;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+}
+.cardio-body.open { display: flex; }
+.cardio-type-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.cardio-type-btn {
+  flex: 1;
+  padding: 10px 6px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text3);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+.cardio-type-btn.selected {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.cardio-type-btn:active { transform: scale(0.97); }
+.cardio-outro-input {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: 'Barlow', sans-serif;
+  width: 100%;
+  outline: none;
+  display: none;
+}
+.cardio-outro-input.visible { display: block; }
+.cardio-outro-input:focus { border-color: var(--accent); }
+.cardio-time-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cardio-time-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.cardio-time-input {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 22px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  width: 90px;
+  outline: none;
+  text-align: center;
+  -webkit-appearance: none;
+}
+.cardio-time-input:focus { border-color: var(--accent); }
+.cardio-time-unit {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+.cardio-save-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 11px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+.cardio-save-btn:active { transform: scale(0.98); filter: brightness(0.9); }
+.cardio-done-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  font-family: 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
 }
 
 /* ===== WORKOUT CARDS ===== */
@@ -902,9 +1290,27 @@ html, body {
 
     <!-- HOME SCREEN -->
     <div class="screen active" id="home-screen">
+      <!-- Next workout hero -->
+      <div id="next-workout-hero"></div>
+      <!-- Stats row -->
       <div class="home-stats" id="home-stats"></div>
-      <div class="section-title">Treinos da Semana</div>
+      <!-- Weekly progress bar -->
+      <div id="weekly-progress-bar-wrap"></div>
+      <div id="weekly-cardio-bar-wrap"></div>
+      <!-- Weekly heatmap -->
+      <div class="section-title" id="streak-title"></div>
+      <div id="weekly-heatmap"></div>
+      <!-- Recent activity -->
+      <div class="section-title" style="margin-top:20px" id="recent-title"></div>
+      <div id="recent-activity"></div>
+      <div style="height:16px"></div>
+    </div>
+
+    <!-- WORKOUT SELECT SCREEN -->
+    <div class="screen" id="workout-select-screen">
+      <div class="section-title" style="margin-bottom:14px">Selecionar Treino</div>
       <div class="workout-grid" id="workout-grid"></div>
+      <div style="height:16px"></div>
     </div>
 
     <!-- TRAINING SCREEN -->
@@ -924,8 +1330,14 @@ html, body {
 
     <!-- DASHBOARD SCREEN -->
     <div class="screen" id="dashboard-screen">
-      <div class="section-title" style="margin-bottom:14px">Dashboard de Evolução</div>
-      <div class="dash-filters">
+      <div class="section-title" style="margin-bottom:12px">Dashboard de Evolução</div>
+      <!-- Mode tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <div class="week-tab active" id="dash-tab-musculacao" style="flex:1;text-align:center;border-radius:8px">💪 Musculação</div>
+        <div class="week-tab" id="dash-tab-cardio" style="flex:1;text-align:center;border-radius:8px">🏃 Cardio</div>
+      </div>
+      <!-- Musculação filters -->
+      <div class="dash-filters" id="dash-musculacao-filters">
         <select class="dash-select" id="dash-workout-select">
           <option value="">Selecionar Treino</option>
         </select>
@@ -933,7 +1345,26 @@ html, body {
           <option value="">Selecionar Exercício</option>
         </select>
       </div>
+      <!-- Cardio filters -->
+      <div class="dash-filters" id="dash-cardio-filters" style="display:none">
+        <select class="dash-select" id="dash-cardio-type-select">
+          <option value="all">Todos os tipos</option>
+          <option value="bike">🚴 Bike</option>
+          <option value="esteira">🏃 Esteira</option>
+          <option value="outro">⚡ Outro</option>
+        </select>
+      </div>
       <div id="dashboard-content"></div>
+    </div>
+
+    <!-- CARDIO SCREEN -->
+    <div class="screen" id="cardio-screen">
+      <div class="section-title" style="margin-bottom:14px">Cardio</div>
+      <div id="cardio-week-tabs-wrap">
+        <div class="week-tabs" id="cardio-week-tabs"></div>
+      </div>
+      <div id="cardio-days-list"></div>
+      <div style="height:16px"></div>
     </div>
 
     <!-- EDIT SCREEN -->
@@ -1010,6 +1441,10 @@ html, body {
     <div class="nav-item" data-screen="training-select">
       <div class="nav-icon">💪</div>
       <div class="nav-label">Treino</div>
+    </div>
+    <div class="nav-item" data-screen="cardio-screen">
+      <div class="nav-icon">🏃</div>
+      <div class="nav-label">Cardio</div>
     </div>
     <div class="nav-item" data-screen="dashboard-screen">
       <div class="nav-icon">📊</div>
@@ -1124,7 +1559,9 @@ const DEFAULT_DATA = {
     }
   ],
   // logs[workoutId][exerciseId][week] = { reps: '', weight: '' }
-  logs: {}
+  logs: {},
+  // cardio[week][day] = { done: bool, type: 'bike'|'esteira'|'outro', outro: '', minutes: '' }
+  cardio: {}
 };
 
 let state = {};
@@ -1208,6 +1645,107 @@ function checkStorageWarning() {
   }
 }
 
+function getCardioLog(week, day) {
+  return state.cardio?.[`w${week}`]?.[day] || { done: false, type: '', outro: '', minutes: '' };
+}
+
+function setCardioLog(week, day, data) {
+  if (!state.cardio) state.cardio = {};
+  if (!state.cardio[`w${week}`]) state.cardio[`w${week}`] = {};
+  state.cardio[`w${week}`][day] = data;
+  saveState();
+}
+
+function getCardioWeek(week) {
+  return state.cardio?.[`w${week}`] || {};
+}
+
+function getCardioAllWeeks() {
+  // Returns [{week, day, type, outro, minutes}] for all cardio logs
+  const entries = [];
+  if (!state.cardio) return entries;
+  Object.keys(state.cardio).forEach(wKey => {
+    const week = parseInt(wKey.replace('w',''));
+    Object.keys(state.cardio[wKey]).forEach(day => {
+      const log = state.cardio[wKey][day];
+      if (log.done && log.minutes) {
+        entries.push({ week, day, ...log });
+      }
+    });
+  });
+  return entries.sort((a, b) => a.week - b.week);
+}
+
+function getCardioWeekTotal(week) {
+  const wk = getCardioWeek(week);
+  return Object.values(wk).filter(l => l.done && l.minutes).length;
+}
+
+function getCardioWeekMinutes(week) {
+  const wk = getCardioWeek(week);
+  return Object.values(wk).filter(l => l.done && l.minutes)
+    .reduce((sum, l) => sum + (parseInt(l.minutes) || 0), 0);
+}
+
+function getCardioByType(type) {
+  // Returns weekly minutes for a specific type across all weeks
+  const byWeek = {};
+  if (!state.cardio) return byWeek;
+  Object.keys(state.cardio).forEach(wKey => {
+    const week = parseInt(wKey.replace('w',''));
+    Object.values(state.cardio[wKey]).forEach(log => {
+      if (log.done && log.minutes && (type === 'all' || log.type === type)) {
+        byWeek[week] = (byWeek[week] || 0) + (parseInt(log.minutes) || 0);
+      }
+    });
+  });
+  return byWeek;
+}
+
+function getCardioAllTypes() {
+  const types = new Set();
+  if (!state.cardio) return [];
+  Object.values(state.cardio).forEach(wk => {
+    Object.values(wk).forEach(log => { if (log.done && log.type) types.add(log.type); });
+  });
+  return Array.from(types);
+}
+
+function getCardioAllDays() {
+  return ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+}
+
+function getWorkoutForDay(day) {
+  return state.workouts.find(w => w.day === day) || null;
+}
+
+function getCardioActiveWeek() {
+  return cardioActiveWeek || state.currentWeek;
+}
+
+function getCardioAllEntries() {
+  const entries = getCardioAllWeeks();
+  return entries;
+}
+
+function getCardioUniqueOutro() {
+  const set = new Set();
+  if (!state.cardio) return [];
+  Object.values(state.cardio).forEach(wk => {
+    Object.values(wk).forEach(log => {
+      if (log.type === 'outro' && log.outro) set.add(log.outro);
+    });
+  });
+  return Array.from(set);
+}
+
+function getCardioLabel(type, outro) {
+  if (type === 'bike') return '🚴 Bike';
+  if (type === 'esteira') return '🏃 Esteira';
+  if (type === 'outro') return '⚡ ' + (outro || 'Outro');
+  return '—';
+}
+
 function getLog(workoutId, exerciseId, week) {
   const key = `w${week}`;
   return state.logs?.[workoutId]?.[exerciseId]?.[key] || { reps: '', weight: '' };
@@ -1233,7 +1771,9 @@ function showScreen(screenId) {
   activeScreen = screenId;
 }
 
-function showWorkout(workoutId) {
+function showWorkout(workoutId, fromHero = false) {
+  const sel = document.getElementById('workout-select-screen');
+  sel.dataset.visited = fromHero ? '' : 'yes';
   activeWorkoutId = workoutId;
   activeWeek = state.currentWeek;
   const workout = state.workouts.find(w => w.id === workoutId);
@@ -1263,26 +1803,32 @@ document.querySelectorAll('.nav-item').forEach(item => {
     item.classList.add('active');
 
     if (screen === 'training-select') {
-      showScreen('home-screen');
-      // Scroll to workouts section
-      setTimeout(() => {
-        document.getElementById('workout-grid').scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      showScreen('workout-select-screen');
+      renderWorkoutGrid();
     } else {
       showScreen(screen);
     }
 
     if (screen === 'dashboard-screen') renderDashboard();
+    if (screen === 'cardio-screen') renderCardioScreen();
     if (screen === 'edit-screen') renderEditScreen();
     if (screen === 'settings-screen') renderSettings();
   });
 });
 
 document.getElementById('training-back').addEventListener('click', () => {
-  showScreen('home-screen');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector('[data-screen="home-screen"]').classList.add('active');
-  renderHome();
+  // Go back to workout select if came from there, else home
+  const fromWorkoutSelect = document.getElementById('workout-select-screen').dataset.visited;
+  if (fromWorkoutSelect) {
+    showScreen('workout-select-screen');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('[data-screen="training-select"]').classList.add('active');
+  } else {
+    showScreen('home-screen');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('[data-screen="home-screen"]').classList.add('active');
+    renderHome();
+  }
 });
 
 document.getElementById('training-done-btn').addEventListener('click', () => {
@@ -1301,9 +1847,59 @@ document.getElementById('training-done-btn').addEventListener('click', () => {
 // HOME SCREEN
 // ============================================================
 function renderHome() {
-  renderStats();
-  renderWorkoutGrid();
   updateWeekBadge();
+  renderNextWorkoutHero();
+  renderHomeStats();
+  renderWeekProgressBar();
+  renderWeekCardioBar();
+  renderWeeklyHeatmap();
+  renderRecentActivity();
+}
+
+function renderWeekProgressBar() {
+  const week = state.currentWeek;
+  const total = state.workouts.length;
+  const done = state.workouts.filter(w => state.weeklyDone[`${w.id}_w${week}`]).length;
+  const pct = Math.round((done / total) * 100);
+  const isComplete = done === total;
+
+  const segments = state.workouts.map((w, i) => {
+    const isDone = state.weeklyDone[`${w.id}_w${week}`];
+    return `<div class="week-progress-seg ${isDone ? 'done' : ''} ${isComplete ? 'complete' : ''}"></div>`;
+  }).join('');
+
+  document.getElementById('weekly-progress-bar-wrap').innerHTML = `
+    <div class="week-progress-wrap">
+      <div class="week-progress-header">
+        <div class="week-progress-label">Semana ${week}</div>
+        <div class="week-progress-count">${done}<span>/${total} treinos</span></div>
+      </div>
+      <div class="week-progress-track">
+        <div class="week-progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
+      </div>
+      <div class="week-progress-segments">${segments}</div>
+    </div>
+  `;
+}
+
+function renderWeekCardioBar() {
+  const week = state.currentWeek;
+  const GOAL = 210; // 30min × 7 days
+  const totalMin = getCardioWeekMinutes(week);
+  const pct = Math.min(100, Math.round((totalMin / GOAL) * 100));
+  const isComplete = totalMin >= GOAL;
+
+  document.getElementById('weekly-cardio-bar-wrap').innerHTML = `
+    <div class="week-progress-wrap" style="margin-top:-8px;margin-bottom:20px">
+      <div class="week-progress-header">
+        <div class="week-progress-label">Cardio</div>
+        <div class="week-progress-count">${totalMin}<span>/210 min</span></div>
+      </div>
+      <div class="week-progress-track">
+        <div class="week-progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
+      </div>
+    </div>
+  `;
 }
 
 function updateWeekBadge() {
@@ -1311,39 +1907,187 @@ function updateWeekBadge() {
   document.getElementById('week-val-display').textContent = state.currentWeek;
 }
 
-function renderStats() {
+// --- Hero: próximo treino ou descanso ---
+function renderNextWorkoutHero() {
+  const hero = document.getElementById('next-workout-hero');
   const week = state.currentWeek;
-  const totalWorkouts = state.workouts.length;
-  const doneCount = state.workouts.filter(w =>
-    state.weeklyDone[`${w.id}_w${week}`]
-  ).length;
+  const todayDay = getTodayWorkoutDay();
 
-  // Count total logged exercises this week
-  let loggedCount = 0;
-  state.workouts.forEach(w => {
-    w.exercises.forEach(ex => {
-      const log = getLog(w.id, ex.id, week);
-      if (log.reps || log.weight) loggedCount++;
+  // Find today's workout
+  const todayWorkout = state.workouts.find(w => w.day === todayDay);
+  const todayDone = todayWorkout && state.weeklyDone[`${todayWorkout.id}_w${week}`];
+
+  // Find next pending workout
+  const dayOrder = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+  const todayIdx = dayOrder.indexOf(todayDay);
+  let nextWorkout = null;
+  for (let i = 1; i <= 7; i++) {
+    const day = dayOrder[(todayIdx + i) % 7];
+    const w = state.workouts.find(w => w.day === day);
+    if (w && !state.weeklyDone[`${w.id}_w${week}`]) { nextWorkout = w; break; }
+  }
+
+  if (todayWorkout && !todayDone) {
+    // Today has a workout pending
+    const logged = todayWorkout.exercises.filter(ex => {
+      const l = getLog(todayWorkout.id, ex.id, week);
+      return l.reps || l.weight;
+    }).length;
+    hero.innerHTML = `
+      <div class="hero-card" id="hero-open-btn">
+        <div class="hero-label">💪 Treino de Hoje</div>
+        <div class="hero-title">${todayWorkout.name}</div>
+        <div class="hero-meta">${todayDay} &middot; ${todayWorkout.exercises.length} exercícios &middot; ${logged} anotados</div>
+        <button class="hero-btn" id="hero-open-btn">Iniciar Treino →</button>
+      </div>`;
+    document.getElementById('hero-open-btn').addEventListener('click', () => showWorkout(todayWorkout.id, true));
+  } else if (todayWorkout && todayDone) {
+    // Today done — show next
+    hero.innerHTML = `
+      <div class="hero-rest">
+        <div class="hero-rest-emoji">✅</div>
+        <div class="hero-rest-title">Treino de hoje concluído!</div>
+        <div class="hero-rest-sub">${nextWorkout ? 'Próximo: ' + nextWorkout.name + ' (' + nextWorkout.day + ')' : 'Semana completa — descanse bem!'}</div>
+      </div>`;
+  } else if (!todayWorkout) {
+    // Rest day
+    hero.innerHTML = `
+      <div class="hero-rest">
+        <div class="hero-rest-emoji">😴</div>
+        <div class="hero-rest-title">Dia de descanso</div>
+        <div class="hero-rest-sub">${nextWorkout ? 'Próximo treino: ' + nextWorkout.name + ' (' + nextWorkout.day + ')' : 'Aproveite a recuperação'}</div>
+      </div>`;
+  } else {
+    hero.innerHTML = '';
+  }
+}
+
+// --- Stats: feitos, sequência, volume ---
+function renderHomeStats() {
+  const week = state.currentWeek;
+  const doneCount = state.workouts.filter(w => state.weeklyDone[`${w.id}_w${week}`]).length;
+
+  // Streak: consecutive weeks with at least 1 workout done
+  let streak = 0;
+  for (let w = week; w >= 1; w--) {
+    const anyDone = state.workouts.some(wk => state.weeklyDone[`${wk.id}_w${w}`]);
+    if (anyDone) streak++;
+    else break;
+  }
+
+  // Volume this week: sum of (weight * first rep count) for all logged exercises
+  let volume = 0;
+  state.workouts.forEach(wk => {
+    wk.exercises.forEach(ex => {
+      const l = getLog(wk.id, ex.id, week);
+      if (l.weight && l.reps) {
+        const w = parseFloat(l.weight) || 0;
+        const r = parseInt(l.reps.split(/[-\/,\s]+/)[0]) || 0;
+        volume += w * r;
+      }
     });
   });
-
-  const totalExercises = state.workouts.reduce((s, w) => s + w.exercises.length, 0);
-  const pct = totalExercises > 0 ? Math.round((loggedCount / totalExercises) * 100) : 0;
+  const volDisplay = volume >= 1000 ? (volume/1000).toFixed(1) + 't' : (volume > 0 ? Math.round(volume) + 'kg' : '—');
 
   document.getElementById('home-stats').innerHTML = `
     <div class="stat-card">
-      <div class="stat-val">${doneCount}</div>
-      <div class="stat-label">Treinos<br>Feitos</div>
+      <div class="stat-val">${doneCount}/${state.workouts.length}</div>
+      <div class="stat-label">Treinos<br>Semana</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val">${totalWorkouts - doneCount}</div>
-      <div class="stat-label">Treinos<br>Pendentes</div>
+      <div class="stat-val">${streak}</div>
+      <div class="stat-label">Semanas<br>Seguidas</div>
     </div>
     <div class="stat-card">
-      <div class="stat-val">${pct}%</div>
-      <div class="stat-label">Progresso<br>da Semana</div>
+      <div class="stat-val">${volDisplay}</div>
+      <div class="stat-label">Volume<br>Semana</div>
     </div>
   `;
+}
+
+// --- Heatmap: últimas 4 semanas ---
+function renderWeeklyHeatmap() {
+  const title = document.getElementById('streak-title');
+  const container = document.getElementById('weekly-heatmap');
+  const currentWeek = state.currentWeek;
+  const startWeek = Math.max(1, currentWeek - 3);
+
+  title.textContent = 'Histórico Recente';
+  title.style.marginBottom = '10px';
+
+  const weeks = [];
+  for (let w = startWeek; w <= currentWeek; w++) weeks.push(w);
+
+  const html = `<div class="heatmap-grid">` +
+    weeks.map(w => {
+      const isCurrent = w === currentWeek;
+      const dots = state.workouts.map((wk, i) => {
+        const done = state.weeklyDone[`${wk.id}_w${w}`];
+        const colors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308'];
+        return `<div class="heatmap-dot ${done ? 'done' : ''}" style="${done ? `background:${colors[i]}` : ''}"></div>`;
+      }).join('');
+      const doneCount = state.workouts.filter(wk => state.weeklyDone[`${wk.id}_w${w}`]).length;
+      return `
+        <div class="heatmap-cell ${isCurrent ? 'today' : ''}">
+          <div class="heatmap-week">Sem ${w}${isCurrent ? ' ●' : ''}</div>
+          <div class="heatmap-dots">${dots}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:5px;font-weight:600">${doneCount}/${state.workouts.length}</div>
+        </div>`;
+    }).join('') +
+  `</div>`;
+
+  container.innerHTML = html;
+}
+
+// --- Recent activity: last 5 logged exercises ---
+function renderRecentActivity() {
+  const title = document.getElementById('recent-title');
+  const container = document.getElementById('recent-activity');
+
+  // Collect all logged entries across all weeks, sorted by recency (higher week = more recent)
+  const entries = [];
+  state.workouts.forEach(wk => {
+    wk.exercises.forEach(ex => {
+      for (let w = 8; w >= 1; w--) {
+        const l = getLog(wk.id, ex.id, w);
+        if (l.reps || l.weight) {
+          entries.push({ workout: wk, exercise: ex, week: w, log: l });
+          break; // only most recent entry per exercise
+        }
+      }
+    });
+  });
+
+  // Sort by week desc, take top 5
+  entries.sort((a, b) => b.week - a.week);
+  const recent = entries.slice(0, 5);
+
+  title.textContent = 'Últimos Registros';
+  title.style.marginTop = '20px';
+  title.style.marginBottom = '10px';
+
+  if (recent.length === 0) {
+    container.innerHTML = `<div class="no-data-msg" style="padding:20px 0">Nenhum exercício registrado ainda</div>`;
+    return;
+  }
+
+  const workoutEmojis = ['🦵','💥','🔙','🍑','🫁','💪'];
+  container.innerHTML = recent.map(entry => {
+    const wIdx = state.workouts.findIndex(w => w.id === entry.workout.id);
+    const emoji = workoutEmojis[wIdx] || '🏋️';
+    return `
+      <div class="recent-item">
+        <div class="recent-icon">${emoji}</div>
+        <div class="recent-info">
+          <div class="recent-ex">${entry.exercise.name}</div>
+          <div class="recent-workout">${entry.workout.name} &middot; Sem ${entry.week}</div>
+        </div>
+        <div class="recent-val">
+          <div class="recent-weight">${entry.log.weight ? entry.log.weight + 'kg' : '—'}</div>
+          <div class="recent-reps">${entry.log.reps || '—'}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function getTodayWorkoutDay() {
@@ -1496,13 +2240,158 @@ function renderExercises() {
 
 
 // ============================================================
+// CARDIO SCREEN
+// ============================================================
+let cardioActiveWeek = null;
+
+function renderCardioScreen() {
+  cardioActiveWeek = cardioActiveWeek || state.currentWeek;
+  renderCardioWeekTabs();
+  renderCardioDays();
+}
+
+function renderCardioWeekTabs() {
+  const tabs = document.getElementById('cardio-week-tabs');
+  const weeks = Array.from({length: 8}, (_, i) => i + 1);
+  tabs.innerHTML = weeks.map(w => `
+    <div class="week-tab ${w === getCardioActiveWeek() ? 'active' : ''}" data-week="${w}">Sem ${w}</div>
+  `).join('');
+  tabs.querySelectorAll('.week-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      cardioActiveWeek = parseInt(tab.dataset.week);
+      renderCardioWeekTabs();
+      renderCardioDays();
+    });
+  });
+}
+
+function renderCardioDays() {
+  const week = getCardioActiveWeek();
+  const days = getCardioAllDays();
+  const list = document.getElementById('cardio-days-list');
+
+  list.innerHTML = days.map(day => {
+    const workout = getWorkoutForDay(day);
+    const log = getCardioLog(week, day);
+    const isDone = log.done && log.minutes;
+    return `
+      <div class="cardio-day-card" data-day="${day}">
+        <div class="cardio-day-header">
+          <div class="cardio-day-name">${day}</div>
+          <div class="cardio-day-workout">${workout ? workout.name : 'Descanso'}</div>
+          <div class="cardio-toggle-wrap">
+            ${isDone ? `<div class="cardio-done-badge">✓ ${isDone ? (parseInt(log.minutes) + 'min') : ''}</div>` : ''}
+            <label class="toggle-switch">
+              <input type="checkbox" class="cardio-toggle" data-day="${day}" ${log.done ? 'checked' : ''}>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+        </div>
+        <div class="cardio-body ${log.done ? 'open' : ''}" id="cardio-body-${day}">
+          <div class="cardio-type-row">
+            <div class="cardio-type-btn ${log.type === 'bike' ? 'selected' : ''}" data-day="${day}" data-type="bike">🚴 Bike</div>
+            <div class="cardio-type-btn ${log.type === 'esteira' ? 'selected' : ''}" data-day="${day}" data-type="esteira">🏃 Esteira</div>
+            <div class="cardio-type-btn ${log.type === 'outro' ? 'selected' : ''}" data-day="${day}" data-type="outro">⚡ Outro</div>
+          </div>
+          <input type="text" class="cardio-outro-input ${log.type === 'outro' ? 'visible' : ''}"
+            id="cardio-outro-${day}" placeholder="Qual atividade?" value="${log.outro || ''}">
+          <div class="cardio-time-row">
+            <div class="cardio-time-label">Duração</div>
+            <input type="number" inputmode="numeric" class="cardio-time-input gym-input"
+              id="cardio-min-${day}" value="${log.minutes || ''}" placeholder="0" min="1" max="300">
+            <div class="cardio-time-unit">MIN</div>
+          </div>
+          <button class="cardio-save-btn" data-day="${day}">Salvar</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Toggle switch listeners
+  list.querySelectorAll('.cardio-toggle').forEach(toggle => {
+    toggle.addEventListener('change', () => {
+      const day = toggle.dataset.day;
+      const body = document.getElementById(`cardio-body-${day}`);
+      body.classList.toggle('open', toggle.checked);
+      if (!toggle.checked) {
+        // Clear log
+        setCardioLog(week, day, { done: false, type: '', outro: '', minutes: '' });
+        renderCardioDays();
+      }
+    });
+  });
+
+  // Type button listeners
+  list.querySelectorAll('.cardio-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const day = btn.dataset.day;
+      const type = btn.dataset.type;
+      // Deselect siblings
+      list.querySelectorAll(`.cardio-type-btn[data-day="${day}"]`).forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      // Show/hide outro input
+      const outro = document.getElementById(`cardio-outro-${day}`);
+      outro.classList.toggle('visible', type === 'outro');
+    });
+  });
+
+  // Save button listeners
+  list.querySelectorAll('.cardio-save-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const day = btn.dataset.day;
+      const selectedType = list.querySelector(`.cardio-type-btn.selected[data-day="${day}"]`);
+      const type = selectedType ? selectedType.dataset.type : '';
+      const outro = document.getElementById(`cardio-outro-${day}`)?.value?.trim() || '';
+      const minutes = document.getElementById(`cardio-min-${day}`)?.value?.trim() || '';
+      if (!type) { showToast('Selecione o tipo de cardio'); return; }
+      if (!minutes || parseInt(minutes) < 1) { showToast('Informe a duração'); return; }
+      setCardioLog(week, day, { done: true, type, outro, minutes });
+      showToast('Cardio salvo! 🏃');
+      renderCardioDays();
+    });
+  });
+}
+
+// ============================================================
 // DASHBOARD
 // ============================================================
 let charts = {};
 
+let dashMode = 'musculacao';
+
 function renderDashboard() {
+  // Wire up mode tabs
+  const tabMusc = document.getElementById('dash-tab-musculacao');
+  const tabCardio = document.getElementById('dash-tab-cardio');
+  tabMusc.onclick = () => {
+    dashMode = 'musculacao';
+    tabMusc.classList.add('active'); tabCardio.classList.remove('active');
+    document.getElementById('dash-musculacao-filters').style.display = '';
+    document.getElementById('dash-cardio-filters').style.display = 'none';
+    renderDashboardOverview();
+  };
+  tabCardio.onclick = () => {
+    dashMode = 'cardio';
+    tabCardio.classList.add('active'); tabMusc.classList.remove('active');
+    document.getElementById('dash-musculacao-filters').style.display = 'none';
+    document.getElementById('dash-cardio-filters').style.display = '';
+    renderCardioDashboard();
+  };
+
+  // Set initial mode display
+  if (dashMode === 'cardio') {
+    tabCardio.classList.add('active'); tabMusc.classList.remove('active');
+    document.getElementById('dash-musculacao-filters').style.display = 'none';
+    document.getElementById('dash-cardio-filters').style.display = '';
+  } else {
+    tabMusc.classList.add('active'); tabCardio.classList.remove('active');
+    document.getElementById('dash-musculacao-filters').style.display = '';
+    document.getElementById('dash-cardio-filters').style.display = 'none';
+  }
+
   const wSel = document.getElementById('dash-workout-select');
   const exSel = document.getElementById('dash-exercise-select');
+  const cardioTypeSel = document.getElementById('dash-cardio-type-select');
 
   // Populate workout select
   const currentWVal = wSel.value;
@@ -1519,13 +2408,158 @@ function renderDashboard() {
   };
 
   exSel.onchange = () => renderDashboardCharts(wSel.value, exSel.value);
+  cardioTypeSel.onchange = () => renderCardioDashboard();
 
-  if (currentWVal) {
+  if (dashMode === 'cardio') {
+    renderCardioDashboard();
+  } else if (currentWVal) {
     wSel.onchange();
     if (exSel.value) renderDashboardCharts(currentWVal, exSel.value);
   } else {
     renderDashboardOverview();
   }
+}
+
+function renderCardioDashboard() {
+  const content = document.getElementById('dashboard-content');
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
+  charts = {};
+
+  const typeFilter = document.getElementById('dash-cardio-type-select')?.value || 'all';
+  const entries = getCardioAllWeeks();
+
+  if (entries.length === 0) {
+    content.innerHTML = '<div class="no-data-msg">Nenhum cardio registrado ainda</div>';
+    return;
+  }
+
+  const labels = Array.from({length: 8}, (_, i) => `Sem ${i+1}`);
+
+  // Minutes per week (filtered by type)
+  const minutesPerWeek = labels.map((_, i) => {
+    const week = i + 1;
+    const wkEntries = entries.filter(e => e.week === week && (typeFilter === 'all' || e.type === typeFilter));
+    return wkEntries.reduce((s, e) => s + (parseInt(e.minutes) || 0), 0) || null;
+  });
+
+  // Sessions per week
+  const sessionsPerWeek = labels.map((_, i) => {
+    const week = i + 1;
+    return entries.filter(e => e.week === week && (typeFilter === 'all' || e.type === typeFilter)).length || null;
+  });
+
+  // Type breakdown for current week
+  const currentWeekEntries = entries.filter(e => e.week === state.currentWeek);
+  const bikeMin = currentWeekEntries.filter(e => e.type === 'bike').reduce((s,e) => s+(parseInt(e.minutes)||0),0);
+  const estMin  = currentWeekEntries.filter(e => e.type === 'esteira').reduce((s,e) => s+(parseInt(e.minutes)||0),0);
+  const outMin  = currentWeekEntries.filter(e => e.type === 'outro').reduce((s,e) => s+(parseInt(e.minutes)||0),0);
+  const totalMin = currentWeekEntries.reduce((s,e) => s+(parseInt(e.minutes)||0),0);
+
+  // Summary stats
+  const totalSessions = entries.filter(e => typeFilter === 'all' || e.type === typeFilter).length;
+  const totalMinutes = entries.filter(e => typeFilter === 'all' || e.type === typeFilter)
+    .reduce((s,e) => s+(parseInt(e.minutes)||0), 0);
+  const avgMin = totalSessions > 0 ? Math.round(totalMinutes / totalSessions) : 0;
+
+  content.innerHTML = `
+    <div class="home-stats" style="margin-bottom:14px">
+      <div class="stat-card">
+        <div class="stat-val">${totalSessions}</div>
+        <div class="stat-label">Total<br>Sessões</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${totalMinutes >= 60 ? Math.floor(totalMinutes/60)+'h' : totalMinutes+'m'}</div>
+        <div class="stat-label">Total<br>Tempo</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${avgMin}m</div>
+        <div class="stat-label">Média<br>Sessão</div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">⏱ Minutos por Semana</div>
+      <div class="chart-container"><canvas id="chart-cardio-min"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">📅 Sessões por Semana</div>
+      <div class="chart-container"><canvas id="chart-cardio-sess"></canvas></div>
+    </div>
+    ${totalMin > 0 ? `
+    <div class="chart-card">
+      <div class="chart-title">🥧 Semana Atual — Mix de Cardio</div>
+      <div class="chart-container" style="height:180px"><canvas id="chart-cardio-mix"></canvas></div>
+    </div>` : ''}
+  `;
+
+  setTimeout(() => {
+    charts['cardio-min'] = new Chart(document.getElementById('chart-cardio-min'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Minutos',
+          data: minutesPerWeek,
+          backgroundColor: 'rgba(249,115,22,0.7)',
+          borderColor: '#f97316',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: chartOptions('Minutos')
+    });
+
+    charts['cardio-sess'] = new Chart(document.getElementById('chart-cardio-sess'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Sessões',
+          data: sessionsPerWeek,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59,130,246,0.1)',
+          tension: 0.4,
+          spanGaps: true,
+          pointRadius: 5,
+          fill: true
+        }]
+      },
+      options: chartOptions('Sessões')
+    });
+
+    if (totalMin > 0 && document.getElementById('chart-cardio-mix')) {
+      const mixData = [bikeMin, estMin, outMin].filter(v => v > 0);
+      const mixLabels = ['🚴 Bike','🏃 Esteira','⚡ Outro'].filter((_, i) => [bikeMin,estMin,outMin][i] > 0);
+      charts['cardio-mix'] = new Chart(document.getElementById('chart-cardio-mix'), {
+        type: 'doughnut',
+        data: {
+          labels: mixLabels,
+          datasets: [{
+            data: mixData,
+            backgroundColor: ['#f97316','#3b82f6','#22c55e'],
+            borderColor: '#1a1a1a',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: { color: '#a0a0a0', font: { size: 11 }, padding: 12 }
+            },
+            tooltip: {
+              backgroundColor: '#1a1a1a',
+              borderColor: '#2a2a2a',
+              borderWidth: 1,
+              callbacks: { label: ctx => ` ${ctx.parsed} min` }
+            }
+          }
+        }
+      });
+    }
+  }, 50);
 }
 
 function renderDashboardOverview() {

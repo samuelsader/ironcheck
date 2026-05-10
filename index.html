@@ -998,8 +998,16 @@ html, body {
   color: var(--text3);
   font-size: 18px;
   cursor: grab;
-  padding: 4px;
+  padding: 4px 8px;
   touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.edit-exercise-row.dragging {
+  opacity: 0.4;
+}
+.edit-exercise-row.drag-over {
+  border-top: 2px solid var(--accent);
 }
 
 .edit-ex-input {
@@ -1416,6 +1424,14 @@ html, body {
           </div>
           <span class="settings-btn-arrow">›</span>
         </button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-section-title">Tema de Cores</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Toque para aplicar</div>
+          <div id="theme-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -2044,22 +2060,29 @@ function renderRecentActivity() {
   const title = document.getElementById('recent-title');
   const container = document.getElementById('recent-activity');
 
-  // Collect all logged entries across all weeks, sorted by recency (higher week = more recent)
+  // Collect ALL log entries (one per exercise per week), not just the most recent per exercise
+  // This way we surface what was actually logged most recently
   const entries = [];
-  state.workouts.forEach(wk => {
-    wk.exercises.forEach(ex => {
+  state.workouts.forEach((wk, wkIdx) => {
+    wk.exercises.forEach((ex, exIdx) => {
       for (let w = 8; w >= 1; w--) {
         const l = getLog(wk.id, ex.id, w);
         if (l.reps || l.weight) {
-          entries.push({ workout: wk, exercise: ex, week: w, log: l });
-          break; // only most recent entry per exercise
+          // Use week as primary sort key, workout+exercise index as tiebreaker
+          // so within the same week, later workouts (done more recently) come first
+          entries.push({ workout: wk, exercise: ex, week: w, log: l, wkIdx, exIdx });
+          break;
         }
       }
     });
   });
 
-  // Sort by week desc, take top 5
-  entries.sort((a, b) => b.week - a.week);
+  // Sort: higher week first; within same week, higher workout index first (last workout of week = most recent)
+  entries.sort((a, b) => {
+    if (b.week !== a.week) return b.week - a.week;
+    if (b.wkIdx !== a.wkIdx) return b.wkIdx - a.wkIdx;
+    return b.exIdx - a.exIdx;
+  });
   const recent = entries.slice(0, 5);
 
   title.textContent = 'Últimos Registros';
@@ -2776,18 +2799,21 @@ function chartOptions(yLabel) {
 // ============================================================
 // EDIT SCREEN
 // ============================================================
+// Track which workout is open in edit screen
+let editOpenWid = null;
+
 function renderEditScreen() {
   const list = document.getElementById('edit-workout-list');
-  list.innerHTML = state.workouts.map((w, wi) => `
+  list.innerHTML = state.workouts.map((w) => `
     <div class="edit-workout-item" data-wid="${w.id}">
       <div class="edit-workout-header">
         <input type="text" class="edit-workout-name-input" value="${w.name}" data-wid="${w.id}" placeholder="Nome do treino">
         <div class="icon-btn edit-toggle-btn">▾</div>
       </div>
-      <div class="edit-exercises-list" id="edit_exlist_${w.id}" style="display:none">
-        ${w.exercises.map((ex, exi) => `
-          <div class="edit-exercise-row" data-wid="${w.id}" data-exid="${ex.id}">
-            <span class="drag-handle">⠿</span>
+      <div class="edit-exercises-list" id="edit_exlist_${w.id}" style="display:${editOpenWid === w.id ? 'flex' : 'none'}">
+        ${w.exercises.map((ex) => `
+          <div class="edit-exercise-row" data-wid="${w.id}" data-exid="${ex.id}" draggable="false">
+            <span class="drag-handle" title="Segurar para reordenar">⠿</span>
             <input type="text" class="edit-ex-input" value="${ex.name}" data-wid="${w.id}" data-exid="${ex.id}" placeholder="Nome do exercício">
             <div class="delete-ex-btn" data-wid="${w.id}" data-exid="${ex.id}">✕</div>
           </div>
@@ -2797,21 +2823,37 @@ function renderEditScreen() {
     </div>
   `).join('');
 
+  // Restore open state arrow
+  if (editOpenWid) {
+    const openItem = list.querySelector(`[data-wid="${editOpenWid}"].edit-workout-item`);
+    if (openItem) openItem.querySelector('.edit-toggle-btn').textContent = '▴';
+  }
+
   // Toggle workout exercise list
   list.querySelectorAll('.edit-toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = btn.closest('.edit-workout-item');
+      const wid = item.dataset.wid;
       const exList = item.querySelector('.edit-exercises-list');
       const isOpen = exList.style.display !== 'none';
-      // Close all
       list.querySelectorAll('.edit-exercises-list').forEach(el => el.style.display = 'none');
       list.querySelectorAll('.edit-toggle-btn').forEach(b => b.textContent = '▾');
       if (!isOpen) {
         exList.style.display = 'flex';
         btn.textContent = '▴';
+        editOpenWid = wid;
+        attachDragToList(exList, wid);
+      } else {
+        editOpenWid = null;
       }
     });
   });
+
+  // If already open, attach drag
+  if (editOpenWid) {
+    const exList = document.getElementById(`edit_exlist_${editOpenWid}`);
+    if (exList) attachDragToList(exList, editOpenWid);
+  }
 
   // Delete exercise
   list.querySelectorAll('.delete-ex-btn').forEach(btn => {
@@ -2820,6 +2862,8 @@ function renderEditScreen() {
       const workout = state.workouts.find(w => w.id === wid);
       if (!workout) return;
       if (workout.exercises.length <= 1) { showToast('Mínimo 1 exercício'); return; }
+      // Save current input values before re-render
+      saveEditInputs();
       workout.exercises = workout.exercises.filter(e => e.id !== exid);
       saveState();
       renderEditScreen();
@@ -2832,23 +2876,17 @@ function renderEditScreen() {
       const wid = btn.dataset.wid;
       const workout = state.workouts.find(w => w.id === wid);
       if (!workout) return;
+      saveEditInputs();
       const newId = `${wid}_ex_${Date.now()}`;
       workout.exercises.push({ id: newId, name: 'Novo Exercício' });
       saveState();
+      editOpenWid = wid;
       renderEditScreen();
-      // Reopen that workout
-      const item = list.querySelector(`[data-wid="${wid}"].edit-workout-item`);
-      if (item) {
-        const exList = item.querySelector('.edit-exercises-list');
-        exList.style.display = 'flex';
-        item.querySelector('.edit-toggle-btn').textContent = '▴';
-      }
     });
   });
 }
 
-document.getElementById('save-edits-btn').addEventListener('click', () => {
-  // Save all name inputs
+function saveEditInputs() {
   document.querySelectorAll('.edit-workout-name-input').forEach(input => {
     const workout = state.workouts.find(w => w.id === input.dataset.wid);
     if (workout) workout.name = input.value.trim() || workout.name;
@@ -2860,6 +2898,93 @@ document.getElementById('save-edits-btn').addEventListener('click', () => {
       if (ex) ex.name = input.value.trim() || ex.name;
     }
   });
+}
+
+// ── Touch drag-to-reorder ──
+function attachDragToList(container, wid) {
+  const rows = () => Array.from(container.querySelectorAll('.edit-exercise-row'));
+  let dragSrc = null;
+  let touchDragEl = null;
+  let touchClone = null;
+  let touchStartY = 0;
+  let touchOffsetY = 0;
+
+  rows().forEach(row => {
+    const handle = row.querySelector('.drag-handle');
+    if (!handle) return;
+
+    // ── Touch drag ──
+    handle.addEventListener('touchstart', e => {
+      e.preventDefault();
+      dragSrc = row;
+      const touch = e.touches[0];
+      const rect = row.getBoundingClientRect();
+      touchOffsetY = touch.clientY - rect.top;
+      touchStartY = touch.clientY;
+
+      // Create floating clone
+      touchClone = row.cloneNode(true);
+      touchClone.style.cssText = `
+        position:fixed; left:${rect.left}px; top:${rect.top}px;
+        width:${rect.width}px; z-index:999; opacity:0.9;
+        background:var(--bg4); border:1px solid var(--accent);
+        border-radius:8px; pointer-events:none;
+        box-shadow:0 8px 24px rgba(0,0,0,0.5);
+        transition: none;
+      `;
+      document.body.appendChild(touchClone);
+      row.classList.add('dragging');
+    }, { passive: false });
+
+    handle.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (!touchClone || !dragSrc) return;
+      const touch = e.touches[0];
+      touchClone.style.top = (touch.clientY - touchOffsetY) + 'px';
+
+      // Find target row under finger
+      touchClone.style.display = 'none';
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      touchClone.style.display = '';
+      const targetRow = el?.closest('.edit-exercise-row');
+      rows().forEach(r => r.classList.remove('drag-over'));
+      if (targetRow && targetRow !== dragSrc) {
+        targetRow.classList.add('drag-over');
+      }
+    }, { passive: false });
+
+    handle.addEventListener('touchend', e => {
+      if (touchClone) { touchClone.remove(); touchClone = null; }
+      if (!dragSrc) return;
+      dragSrc.classList.remove('dragging');
+      rows().forEach(r => r.classList.remove('drag-over'));
+
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const targetRow = el?.closest('.edit-exercise-row');
+
+      if (targetRow && targetRow !== dragSrc) {
+        const workout = state.workouts.find(w => w.id === wid);
+        if (!workout) return;
+        saveEditInputs();
+        const srcId = dragSrc.dataset.exid;
+        const tgtId = targetRow.dataset.exid;
+        const srcIdx = workout.exercises.findIndex(e => e.id === srcId);
+        const tgtIdx = workout.exercises.findIndex(e => e.id === tgtId);
+        if (srcIdx !== -1 && tgtIdx !== -1) {
+          const [moved] = workout.exercises.splice(srcIdx, 1);
+          workout.exercises.splice(tgtIdx, 0, moved);
+          saveState();
+          renderEditScreen();
+        }
+      }
+      dragSrc = null;
+    });
+  });
+}
+
+document.getElementById('save-edits-btn').addEventListener('click', () => {
+  saveEditInputs();
   saveState();
   renderHome();
   showToast('Alterações salvas! ✅');
@@ -2870,6 +2995,7 @@ document.getElementById('save-edits-btn').addEventListener('click', () => {
 // ============================================================
 function renderSettings() {
   updateWeekBadge();
+  renderThemeSwatches();
 }
 
 document.getElementById('week-inc').addEventListener('click', () => {
@@ -2946,9 +3072,77 @@ function showToast(msg) {
 }
 
 // ============================================================
+// THEMES
+// ============================================================
+const THEMES = [
+  { name: 'Ferro',    accent: '#f97316', accent2: '#fb923c', dim: 'rgba(249,115,22,0.15)',  glow: 'rgba(249,115,22,0.3)'  },
+  { name: 'Rubi',     accent: '#ef4444', accent2: '#f87171', dim: 'rgba(239,68,68,0.15)',   glow: 'rgba(239,68,68,0.3)'   },
+  { name: 'Violeta',  accent: '#a855f7', accent2: '#c084fc', dim: 'rgba(168,85,247,0.15)',  glow: 'rgba(168,85,247,0.3)'  },
+  { name: 'Cobalto',  accent: '#3b82f6', accent2: '#60a5fa', dim: 'rgba(59,130,246,0.15)',  glow: 'rgba(59,130,246,0.3)'  },
+  { name: 'Esmeralda',accent: '#22c55e', accent2: '#4ade80', dim: 'rgba(34,197,94,0.15)',   glow: 'rgba(34,197,94,0.3)'   },
+  { name: 'Ciano',    accent: '#06b6d4', accent2: '#22d3ee', dim: 'rgba(6,182,212,0.15)',   glow: 'rgba(6,182,212,0.3)'   },
+  { name: 'Rosa',     accent: '#ec4899', accent2: '#f472b6', dim: 'rgba(236,72,153,0.15)',  glow: 'rgba(236,72,153,0.3)'  },
+  { name: 'Âmbar',    accent: '#eab308', accent2: '#facc15', dim: 'rgba(234,179,8,0.15)',   glow: 'rgba(234,179,8,0.3)'   },
+  { name: 'Lima',     accent: '#84cc16', accent2: '#a3e635', dim: 'rgba(132,204,22,0.15)',  glow: 'rgba(132,204,22,0.3)'  },
+  { name: 'Branco',   accent: '#e5e5e5', accent2: '#ffffff', dim: 'rgba(229,229,229,0.12)', glow: 'rgba(229,229,229,0.2)' },
+];
+
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.style.setProperty('--accent',     theme.accent);
+  root.style.setProperty('--accent2',    theme.accent2);
+  root.style.setProperty('--accent-dim', theme.dim);
+  root.style.setProperty('--accent-glow',theme.glow);
+  state.theme = theme.name;
+  saveState();
+  renderThemeSwatches();
+}
+
+function renderThemeSwatches() {
+  const wrap = document.getElementById('theme-swatches');
+  if (!wrap) return;
+  wrap.innerHTML = THEMES.map(t => {
+    const isActive = (state.theme || 'Ferro') === t.name;
+    return `
+      <div title="${t.name}" data-theme="${t.name}"
+        style="
+          width:36px; height:36px; border-radius:50%;
+          background:${t.accent};
+          cursor:pointer;
+          border: ${isActive ? '3px solid white' : '3px solid transparent'};
+          box-shadow: ${isActive ? '0 0 0 2px ' + t.accent : '0 2px 8px rgba(0,0,0,0.4)'};
+          transition: all 0.2s;
+          flex-shrink:0;
+        ">
+      </div>`;
+  }).join('');
+
+  wrap.querySelectorAll('[data-theme]').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      const theme = THEMES.find(t => t.name === swatch.dataset.theme);
+      if (theme) applyTheme(theme);
+    });
+  });
+}
+
+function loadSavedTheme() {
+  if (state.theme) {
+    const theme = THEMES.find(t => t.name === state.theme);
+    if (theme) {
+      const root = document.documentElement;
+      root.style.setProperty('--accent',     theme.accent);
+      root.style.setProperty('--accent2',    theme.accent2);
+      root.style.setProperty('--accent-dim', theme.dim);
+      root.style.setProperty('--accent-glow',theme.glow);
+    }
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 loadState();
+loadSavedTheme();
 checkStorageWarning();
 renderHome();
 

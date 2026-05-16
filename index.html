@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0a">
-<title>IronCheck</title>
+<title>IronLog</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -404,57 +404,29 @@ html, body {
   background: var(--bg3);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   overflow: hidden;
-  transition: border-color 0.2s;
 }
-.cardio-day-card.has-data { border-color: rgba(249,115,22,0.35); }
 .cardio-day-header {
   display: flex;
   align-items: center;
-  padding: 12px 14px;
-  gap: 10px;
-  cursor: pointer;
+  padding: 14px 16px;
+  gap: 12px;
 }
 .cardio-day-name {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text2);
-  min-width: 65px;
+  min-width: 70px;
 }
 .cardio-day-workout {
   flex: 1;
-  font-size: 11px;
-  color: var(--text3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cardio-summary-pill {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--accent-dim);
-  border: 1px solid var(--accent);
-  border-radius: 12px;
-  padding: 3px 10px;
-  font-family: 'Barlow Condensed', sans-serif;
   font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  flex-shrink: 0;
-}
-.cardio-expand-arrow {
   color: var(--text3);
-  font-size: 14px;
-  margin-left: 6px;
-  flex-shrink: 0;
-  transition: transform 0.2s;
 }
-.cardio-expand-arrow.open { transform: rotate(180deg); }
 .cardio-toggle-wrap {
   display: flex;
   align-items: center;
@@ -504,7 +476,7 @@ html, body {
 }
 .cardio-body {
   display: none;
-  padding: 0 14px 14px;
+  padding: 0 16px 14px;
   flex-direction: column;
   gap: 10px;
   border-top: 1px solid var(--border);
@@ -602,20 +574,6 @@ html, body {
   transition: all 0.2s;
 }
 .cardio-save-btn:active { transform: scale(0.98); filter: brightness(0.9); }
-.cardio-clear-btn {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text3);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  cursor: pointer;
-  width: 100%;
-}
 .cardio-done-badge {
   display: flex;
   align-items: center;
@@ -1328,7 +1286,7 @@ html, body {
 
   <!-- HEADER -->
   <div id="header">
-    <div class="logo">Iron<span>Check</span></div>
+    <div class="logo">Iron<span>Log</span></div>
     <div class="header-right">
       <div class="week-badge" id="header-week-badge">SEM 1</div>
 
@@ -1427,34 +1385,8 @@ html, body {
 
     <!-- SETTINGS SCREEN -->
     <div class="screen" id="settings-screen">
-
-      <!-- Planejamento -->
       <div class="settings-section">
-        <div class="settings-section-title">Planejamento</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Data de Início</div>
-            <input type="date" id="plan-start-date" class="gym-input" style="width:100%;font-size:15px">
-            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="plan-week-info"></div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Total de Semanas</div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <button class="week-ctrl-btn" id="totalweeks-dec">−</button>
-              <div class="week-ctrl-val" id="totalweeks-val">12</div>
-              <button class="week-ctrl-btn" id="totalweeks-inc">+</button>
-              <span style="font-size:12px;color:var(--text3)">semanas no planejamento</span>
-            </div>
-          </div>
-          <div style="font-size:11px;color:var(--text3);padding-top:4px;border-top:1px solid var(--border)" id="plan-auto-note">
-            Com a data de início preenchida, a semana atual é calculada automaticamente.
-          </div>
-        </div>
-      </div>
-
-      <!-- Semana manual (fallback when no plan date) -->
-      <div class="settings-section" id="manual-week-section">
-        <div class="settings-section-title">Semana Atual (Manual)</div>
+        <div class="settings-section-title">Semana Atual</div>
         <div class="current-week-control">
           <div class="week-ctrl-label">Semana de Treino</div>
           <div class="week-ctrl-btns">
@@ -1463,12 +1395,6 @@ html, body {
             <button class="week-ctrl-btn" id="week-inc">+</button>
           </div>
         </div>
-      </div>
-
-      <!-- Days config -->
-      <div class="settings-section">
-        <div class="settings-section-title">Dias dos Treinos</div>
-        <div id="day-config-list" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
 
       <div class="settings-section">
@@ -1502,22 +1428,16 @@ html, body {
 
       <div class="settings-section">
         <div class="settings-section-title">Tema de Cores</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Cor de Destaque</div>
-            <div id="theme-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Fundo do App</div>
-            <div id="bg-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-          </div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">
+          <div style="font-size:12px;color:var(--text3);margin-bottom:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px">Toque para aplicar</div>
+          <div id="theme-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
         </div>
       </div>
 
       <div class="settings-section">
         <div class="settings-section-title">Sobre</div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.0</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONLOG v1.0</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos localmente no navegador.
         </div>
@@ -1572,8 +1492,6 @@ html, body {
 // ============================================================
 const DEFAULT_DATA = {
   currentWeek: 1,
-  planStartDate: null,   // ISO date string e.g. "2026-05-01"
-  totalWeeks: 12,        // total planned weeks
   weeklyDone: {},
   workouts: [
     {
@@ -1656,10 +1574,8 @@ const DEFAULT_DATA = {
       ]
     }
   ],
-  // logs[workoutId][exerciseId][week] = { reps: '', weight: '', seriesWeights: null }
+  // logs[workoutId][exerciseId][week] = { reps: '', weight: '' }
   logs: {},
-  // seriesConfig[exerciseId] = number of series (default 1)
-  seriesConfig: {},
   // cardio[week][day] = { done: bool, type: 'bike'|'esteira'|'outro', outro: '', minutes: '' }
   cardio: {}
 };
@@ -1674,7 +1590,7 @@ const Storage = (() => {
   function isAvailable() {
     if (_storageAvailable !== null) return _storageAvailable;
     try {
-      const test = '__ironcheck_test__';
+      const test = '__ironlog_test__';
       localStorage.setItem(test, '1');
       localStorage.removeItem(test);
       _storageAvailable = true;
@@ -1704,7 +1620,7 @@ const Storage = (() => {
 
 function loadState() {
   try {
-    const stored = Storage.get('ironcheck_v1');
+    const stored = Storage.get('ironlog_v2');
     if (stored) {
       state = JSON.parse(stored);
       if (!state.workouts) state.workouts = DEFAULT_DATA.workouts;
@@ -1721,7 +1637,7 @@ function loadState() {
 
 function saveState() {
   try {
-    Storage.set('ironcheck_v1', JSON.stringify(state));
+    Storage.set('ironlog_v2', JSON.stringify(state));
   } catch(e) {
     // Silently ignore — state is still in memory for this session
   }
@@ -1848,38 +1764,7 @@ function getCardioLabel(type, outro) {
 
 function getLog(workoutId, exerciseId, week) {
   const key = `w${week}`;
-  return state.logs?.[workoutId]?.[exerciseId]?.[key] || { reps: '', weight: '', seriesWeights: null };
-}
-
-// Parse a weight string or series array into a display average
-function getAvgWeight(log) {
-  if (!log) return null;
-  if (log.seriesWeights && log.seriesWeights.length > 0) {
-    const vals = log.seriesWeights.map(v => parseFloat(v)).filter(v => !isNaN(v) && v > 0);
-    if (vals.length === 0) return null;
-    return vals.reduce((a, b) => a + b, 0) / vals.length;
-  }
-  return log.weight ? parseFloat(log.weight) : null;
-}
-
-// Get display weight string
-function getWeightDisplay(log) {
-  if (!log) return '—';
-  if (log.seriesWeights && log.seriesWeights.some(v => v)) {
-    return log.seriesWeights.filter(v => v).join(' / ') + ' kg';
-  }
-  return log.weight ? log.weight + 'kg' : '—';
-}
-
-// Get number of series for an exercise (stored per exercise id)
-function getSeriesCount(exerciseId) {
-  return state.seriesConfig?.[exerciseId] || 1;
-}
-
-function setSeriesCount(exerciseId, count) {
-  if (!state.seriesConfig) state.seriesConfig = {};
-  state.seriesConfig[exerciseId] = count;
-  saveState();
+  return state.logs?.[workoutId]?.[exerciseId]?.[key] || { reps: '', weight: '' };
 }
 
 function setLog(workoutId, exerciseId, week, reps, weight) {
@@ -2271,7 +2156,7 @@ function renderWorkoutGrid() {
 // ============================================================
 function renderWeekTabs() {
   const tabs = document.getElementById('week-tabs');
-  const weeks = Array.from({length: Math.max(8, state.totalWeeks || 8)}, (_, i) => i + 1);
+  const weeks = Array.from({length: 8}, (_, i) => i + 1);
   tabs.innerHTML = weeks.map(w => `
     <div class="week-tab ${w === activeWeek ? 'active' : ''}" data-week="${w}">Sem ${w}</div>
   `).join('');
@@ -2284,23 +2169,6 @@ function renderWeekTabs() {
   });
 }
 
-function buildSeriesWeightInputs(exId, seriesCount, currentSeriesWeights) {
-  if (seriesCount <= 1) return '';
-  const inputs = Array.from({length: seriesCount}, (_, i) => {
-    const val = currentSeriesWeights?.[i] || '';
-    return `
-      <div class="input-group" style="min-width:80px">
-        <div class="input-label">Série ${i+1}</div>
-        <div style="display:flex;align-items:center;gap:4px">
-          <input type="text" inputmode="decimal" class="gym-input series-weight-input"
-            data-series="${i}" id="sw_${exId}_${i}" value="${val}" placeholder="kg" style="width:70px;text-align:center">
-          <span style="font-size:11px;color:var(--text3)">kg</span>
-        </div>
-      </div>`;
-  }).join('');
-  return `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px">${inputs}</div>`;
-}
-
 function renderExercises() {
   const workout = state.workouts.find(w => w.id === activeWorkoutId);
   if (!workout) return;
@@ -2308,33 +2176,15 @@ function renderExercises() {
 
   list.innerHTML = workout.exercises.map((ex, idx) => {
     const log = getLog(activeWorkoutId, ex.id, activeWeek);
-    const hasCurrent = log.reps || log.weight || (log.seriesWeights && log.seriesWeights.some(v=>v));
-    const seriesCount = getSeriesCount(ex.id);
-    const usingSeries = seriesCount > 1;
+    const hasCurrent = log.reps || log.weight;
 
-    // Only show previous week entry
-    const prevLog = activeWeek > 1 ? getLog(activeWorkoutId, ex.id, activeWeek - 1) : null;
-    const prevHasData = prevLog && (prevLog.reps || prevLog.weight || (prevLog.seriesWeights && prevLog.seriesWeights.some(v=>v)));
-    const prevWeightStr = prevLog ? getWeightDisplay(prevLog) : null;
-    const lastLabel = prevHasData
-      ? `Sem ${activeWeek-1}: ${prevWeightStr} · ${prevLog.reps || '—'}`
-      : 'Sem registro anterior';
-
-    // Series count selector
-    const seriesSelector = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-        <span style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Séries:</span>
-        ${[1,2,3,4,5].map(n => `
-          <div class="series-count-btn ${seriesCount === n ? 'active' : ''}"
-            data-exid="${ex.id}" data-count="${n}"
-            style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;
-              font-size:13px;font-weight:800;font-family:'Barlow Condensed',sans-serif;cursor:pointer;
-              background:${seriesCount===n ? 'var(--accent)' : 'var(--bg4)'};
-              border:1px solid ${seriesCount===n ? 'var(--accent)' : 'var(--border)'};
-              color:${seriesCount===n ? 'white' : 'var(--text3)'}">
-            ${n}
-          </div>`).join('')}
-      </div>`;
+    // Find previous weeks data
+    const prevLogs = [];
+    for (let w = 1; w <= 8; w++) {
+      const l = getLog(activeWorkoutId, ex.id, w);
+      if (l.reps || l.weight) prevLogs.push({ week: w, reps: l.reps, weight: l.weight });
+    }
+    const lastEntry = prevLogs.filter(l => l.week < activeWeek).pop();
 
     return `
       <div class="exercise-card" data-exid="${ex.id}">
@@ -2342,28 +2192,32 @@ function renderExercises() {
           <div class="exercise-num">${idx + 1}</div>
           <div class="exercise-name-wrap">
             <div class="exercise-name">${ex.name}</div>
-            <div class="exercise-last">${lastLabel}</div>
+            <div class="exercise-last">${lastEntry ? `Última: ${lastEntry.weight ? lastEntry.weight+'kg' : ''} ${lastEntry.reps || ''} (Sem ${lastEntry.week})` : 'Nenhum registro anterior'}</div>
           </div>
           <div class="exercise-status ${hasCurrent ? 'filled' : ''}"></div>
         </div>
         <div class="exercise-body" id="body_${ex.id}">
-          ${seriesSelector}
-          ${usingSeries
-            ? buildSeriesWeightInputs(ex.id, seriesCount, log.seriesWeights)
-            : `<div class="input-row">
-                <div class="input-group">
-                  <div class="input-label">Peso (kg)</div>
-                  <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${log.weight || ''}" placeholder="ex: 40">
-                </div>
-               </div>`
-          }
           <div class="input-row">
-            <div class="input-group" style="flex:1">
+            <div class="input-group">
+              <div class="input-label">Peso (kg)</div>
+              <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${log.weight}" placeholder="ex: 40">
+            </div>
+            <div class="input-group">
               <div class="input-label">Repetições</div>
-              <input type="text" class="gym-input" id="reps_${ex.id}" value="${log.reps || ''}" placeholder="ex: 12-10-8">
+              <input type="text" class="gym-input" id="reps_${ex.id}" value="${log.reps}" placeholder="ex: 12-10-8">
             </div>
           </div>
           <button class="save-exercise-btn" data-exid="${ex.id}">Salvar</button>
+          ${prevLogs.length > 0 ? `
+            <div class="mini-history">
+              ${prevLogs.slice(-4).map(l => `
+                <div class="mini-week-chip">
+                  <strong>Sem ${l.week}</strong>
+                  <span class="chip-val">${l.weight ? l.weight+'kg' : '—'}<br>${l.reps || '—'}</span>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
@@ -2375,25 +2229,13 @@ function renderExercises() {
       const card = header.closest('.exercise-card');
       const body = card.querySelector('.exercise-body');
       const isOpen = body.classList.contains('open');
+      // Close all
       list.querySelectorAll('.exercise-body').forEach(b => b.classList.remove('open'));
       if (!isOpen) {
         body.classList.add('open');
+        // Focus weight input
         setTimeout(() => body.querySelector('.gym-input')?.focus(), 50);
       }
-    });
-  });
-
-  // Series count selector
-  list.querySelectorAll('.series-count-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const exId = btn.dataset.exid;
-      const count = parseInt(btn.dataset.count);
-      setSeriesCount(exId, count);
-      renderExercises();
-      // Re-open the card
-      const card = list.querySelector(`[data-exid="${exId}"]`);
-      if (card) card.querySelector('.exercise-body').classList.add('open');
     });
   });
 
@@ -2402,31 +2244,17 @@ function renderExercises() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const exId = btn.dataset.exid;
-      const reps = document.getElementById(`reps_${exId}`)?.value.trim() || '';
-      const seriesCount = getSeriesCount(exId);
-      let weight = '';
-      let seriesWeights = null;
+      const reps = document.getElementById(`reps_${exId}`).value.trim();
+      const weight = document.getElementById(`weight_${exId}`).value.trim();
+      setLog(activeWorkoutId, exId, activeWeek, reps, weight);
 
-      if (seriesCount > 1) {
-        seriesWeights = Array.from({length: seriesCount}, (_, i) =>
-          document.getElementById(`sw_${exId}_${i}`)?.value.trim() || ''
-        );
-        // Compute avg for legacy weight field
-        const vals = seriesWeights.map(v => parseFloat(v)).filter(v => !isNaN(v) && v > 0);
-        weight = vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '';
-      } else {
-        weight = document.getElementById(`weight_${exId}`)?.value.trim() || '';
-      }
-
-      if (!state.logs[activeWorkoutId]) state.logs[activeWorkoutId] = {};
-      if (!state.logs[activeWorkoutId][exId]) state.logs[activeWorkoutId][exId] = {};
-      state.logs[activeWorkoutId][exId][`w${activeWeek}`] = { reps, weight, seriesWeights };
-      saveState();
-
+      // Update status dot
       const card = btn.closest('.exercise-card');
       const dot = card.querySelector('.exercise-status');
       dot.classList.toggle('filled', !!(reps || weight));
+
       showToast('Salvo! 💪');
+      // Close body
       card.querySelector('.exercise-body').classList.remove('open');
     });
   });
@@ -2465,38 +2293,24 @@ function renderCardioDays() {
   const days = getCardioAllDays();
   const list = document.getElementById('cardio-days-list');
 
-  // Week summary header
-  const totalMin = getCardioWeekMinutes(week);
-  const totalSessions = getCardioWeekTotal(week);
-
-  list.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius)">
-      <div>
-        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Semana ${week}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--accent);line-height:1">${totalSessions} sessões · ${totalMin} min</div>
-      </div>
-      <div style="font-size:28px">🏃</div>
-    </div>` +
-    days.map(day => {
+  list.innerHTML = days.map(day => {
     const workout = getWorkoutForDay(day);
     const log = getCardioLog(week, day);
     const isDone = log.done && log.minutes;
-
     return `
-      <div class="cardio-day-card ${isDone ? 'has-data' : ''}" data-day="${day}">
+      <div class="cardio-day-card" data-day="${day}">
         <div class="cardio-day-header">
           <div class="cardio-day-name">${day}</div>
           <div class="cardio-day-workout">${workout ? workout.name : 'Descanso'}</div>
-          ${isDone
-            ? `<div class="cardio-summary-pill">${getCardioLabel(log.type, log.outro)} · ${log.minutes}min</div>
-               <div class="cardio-expand-arrow" id="arrow_${day}">▾</div>`
-            : `<label class="toggle-switch" onclick="event.stopPropagation()">
-                 <input type="checkbox" class="cardio-toggle" data-day="${day}">
-                 <div class="toggle-track"></div>
-               </label>`
-          }
+          <div class="cardio-toggle-wrap">
+            ${isDone ? `<div class="cardio-done-badge">✓ ${isDone ? (parseInt(log.minutes) + 'min') : ''}</div>` : ''}
+            <label class="toggle-switch">
+              <input type="checkbox" class="cardio-toggle" data-day="${day}" ${log.done ? 'checked' : ''}>
+              <div class="toggle-track"></div>
+            </label>
+          </div>
         </div>
-        <div class="cardio-body" id="cardio-body-${day}">
+        <div class="cardio-body ${log.done ? 'open' : ''}" id="cardio-body-${day}">
           <div class="cardio-type-row">
             <div class="cardio-type-btn ${log.type === 'bike' ? 'selected' : ''}" data-day="${day}" data-type="bike">🚴 Bike</div>
             <div class="cardio-type-btn ${log.type === 'esteira' ? 'selected' : ''}" data-day="${day}" data-type="esteira">🏃 Esteira</div>
@@ -2511,53 +2325,40 @@ function renderCardioDays() {
             <div class="cardio-time-unit">MIN</div>
           </div>
           <button class="cardio-save-btn" data-day="${day}">Salvar</button>
-          ${isDone ? `<button class="cardio-clear-btn" data-day="${day}">Remover registro</button>` : ''}
         </div>
       </div>
     `;
   }).join('');
 
-  // Header click to expand (for days with data)
-  list.querySelectorAll('.cardio-day-card.has-data .cardio-day-header').forEach(header => {
-    header.addEventListener('click', () => {
-      const day = header.closest('.cardio-day-card').dataset.day;
-      const body = document.getElementById(`cardio-body-${day}`);
-      const arrow = document.getElementById(`arrow_${day}`);
-      const isOpen = body.classList.contains('open');
-      // Close all
-      list.querySelectorAll('.cardio-body').forEach(b => b.classList.remove('open'));
-      list.querySelectorAll('.cardio-expand-arrow').forEach(a => a.classList.remove('open'));
-      if (!isOpen) {
-        body.classList.add('open');
-        if (arrow) arrow.classList.add('open');
-      }
-    });
-  });
-
-  // Toggle for empty days — open form
+  // Toggle switch listeners
   list.querySelectorAll('.cardio-toggle').forEach(toggle => {
     toggle.addEventListener('change', () => {
       const day = toggle.dataset.day;
       const body = document.getElementById(`cardio-body-${day}`);
-      // Close all others first
-      list.querySelectorAll('.cardio-body').forEach(b => b.classList.remove('open'));
-      if (toggle.checked) body.classList.add('open');
+      body.classList.toggle('open', toggle.checked);
+      if (!toggle.checked) {
+        // Clear log
+        setCardioLog(week, day, { done: false, type: '', outro: '', minutes: '' });
+        renderCardioDays();
+      }
     });
   });
 
-  // Type button
+  // Type button listeners
   list.querySelectorAll('.cardio-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const day = btn.dataset.day;
       const type = btn.dataset.type;
+      // Deselect siblings
       list.querySelectorAll(`.cardio-type-btn[data-day="${day}"]`).forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
+      // Show/hide outro input
       const outro = document.getElementById(`cardio-outro-${day}`);
-      if (outro) outro.classList.toggle('visible', type === 'outro');
+      outro.classList.toggle('visible', type === 'outro');
     });
   });
 
-  // Save
+  // Save button listeners
   list.querySelectorAll('.cardio-save-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const day = btn.dataset.day;
@@ -2572,16 +2373,8 @@ function renderCardioDays() {
       renderCardioDays();
     });
   });
-
-  // Clear
-  list.querySelectorAll('.cardio-clear-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const day = btn.dataset.day;
-      setCardioLog(week, day, { done: false, type: '', outro: '', minutes: '' });
-      renderCardioDays();
-    });
-  });
 }
+
 // ============================================================
 // DASHBOARD
 // ============================================================
@@ -3200,89 +2993,13 @@ document.getElementById('save-edits-btn').addEventListener('click', () => {
 // ============================================================
 // SETTINGS
 // ============================================================
-function computeCurrentWeekFromPlan() {
-  if (!state.planStartDate) return null;
-  const start = new Date(state.planStartDate);
-  const today = new Date();
-  start.setHours(0,0,0,0); today.setHours(0,0,0,0);
-  const diffDays = Math.floor((today - start) / (1000*60*60*24));
-  if (diffDays < 0) return 1;
-  const week = Math.floor(diffDays / 7) + 1;
-  const totalWeeks = state.totalWeeks || 12;
-  return Math.min(week, totalWeeks);
-}
-
 function renderSettings() {
-  // Auto-compute week if plan date is set
-  if (state.planStartDate) {
-    const computed = computeCurrentWeekFromPlan();
-    if (computed !== null && computed !== state.currentWeek) {
-      state.currentWeek = computed;
-      saveState();
-    }
-    document.getElementById('manual-week-section').style.display = 'none';
-    document.getElementById('plan-auto-note').textContent =
-      `Semana atual calculada automaticamente: Semana ${state.currentWeek}`;
-  } else {
-    document.getElementById('manual-week-section').style.display = '';
-    document.getElementById('plan-auto-note').textContent =
-      'Com a data de início preenchida, a semana atual é calculada automaticamente.';
-  }
-
   updateWeekBadge();
   renderThemeSwatches();
-
-  // Plan start date
-  const dateInput = document.getElementById('plan-start-date');
-  if (dateInput) {
-    dateInput.value = state.planStartDate || '';
-    dateInput.onchange = () => {
-      state.planStartDate = dateInput.value || null;
-      saveState();
-      renderSettings();
-      renderHome();
-    };
-  }
-
-  // Total weeks
-  const twVal = document.getElementById('totalweeks-val');
-  if (twVal) {
-    twVal.textContent = state.totalWeeks || 12;
-  }
-
-  // Week tabs — update max based on totalWeeks
-  const totalWeeks = state.totalWeeks || 12;
-  document.getElementById('plan-week-info').textContent =
-    state.planStartDate
-      ? `Planejamento: ${totalWeeks} semanas · Semana atual: ${state.currentWeek}`
-      : '';
-
-  // Day config list
-  const dayList = document.getElementById('day-config-list');
-  if (dayList) {
-    const allDays = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
-    dayList.innerHTML = state.workouts.map(w => `
-      <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px">
-        <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.name}</div>
-        <select class="dash-select day-config-select" data-wid="${w.id}"
-          style="flex-shrink:0;width:110px;padding:6px 8px;font-size:13px">
-          <option value="">— Dia —</option>
-          ${allDays.map(d => `<option value="${d}" ${w.day === d ? 'selected' : ''}>${d}</option>`).join('')}
-        </select>
-      </div>
-    `).join('');
-
-    dayList.querySelectorAll('.day-config-select').forEach(sel => {
-      sel.onchange = () => {
-        const workout = state.workouts.find(w => w.id === sel.dataset.wid);
-        if (workout) { workout.day = sel.value || undefined; saveState(); renderHome(); }
-      };
-    });
-  }
 }
 
 document.getElementById('week-inc').addEventListener('click', () => {
-  state.currentWeek = Math.min(state.totalWeeks || 52, state.currentWeek + 1);
+  state.currentWeek = Math.min(52, state.currentWeek + 1);
   saveState();
   updateWeekBadge();
   renderHome();
@@ -3295,28 +3012,12 @@ document.getElementById('week-dec').addEventListener('click', () => {
   renderHome();
 });
 
-document.getElementById('totalweeks-inc').addEventListener('click', () => {
-  state.totalWeeks = Math.min(52, (state.totalWeeks || 12) + 1);
-  saveState();
-  document.getElementById('totalweeks-val').textContent = state.totalWeeks;
-  document.getElementById('plan-week-info').textContent =
-    state.planStartDate ? `Planejamento: ${state.totalWeeks} semanas · Semana atual: ${state.currentWeek}` : '';
-});
-
-document.getElementById('totalweeks-dec').addEventListener('click', () => {
-  state.totalWeeks = Math.max(1, (state.totalWeeks || 12) - 1);
-  saveState();
-  document.getElementById('totalweeks-val').textContent = state.totalWeeks;
-  document.getElementById('plan-week-info').textContent =
-    state.planStartDate ? `Planejamento: ${state.totalWeeks} semanas · Semana atual: ${state.currentWeek}` : '';
-});
-
 document.getElementById('export-btn').addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `ironcheck_backup_${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `ironlog_backup_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('Backup exportado! 📤');
@@ -3373,30 +3074,20 @@ function showToast(msg) {
 // ============================================================
 // THEMES
 // ============================================================
-const ACCENT_THEMES = [
-  { name: 'Ferro',     accent: '#f97316', accent2: '#fb923c', dim: 'rgba(249,115,22,0.15)',  glow: 'rgba(249,115,22,0.3)'  },
-  { name: 'Rubi',      accent: '#ef4444', accent2: '#f87171', dim: 'rgba(239,68,68,0.15)',   glow: 'rgba(239,68,68,0.3)'   },
-  { name: 'Violeta',   accent: '#a855f7', accent2: '#c084fc', dim: 'rgba(168,85,247,0.15)',  glow: 'rgba(168,85,247,0.3)'  },
-  { name: 'Cobalto',   accent: '#3b82f6', accent2: '#60a5fa', dim: 'rgba(59,130,246,0.15)',  glow: 'rgba(59,130,246,0.3)'  },
-  { name: 'Esmeralda', accent: '#22c55e', accent2: '#4ade80', dim: 'rgba(34,197,94,0.15)',   glow: 'rgba(34,197,94,0.3)'   },
-  { name: 'Ciano',     accent: '#06b6d4', accent2: '#22d3ee', dim: 'rgba(6,182,212,0.15)',   glow: 'rgba(6,182,212,0.3)'   },
-  { name: 'Rosa',      accent: '#ec4899', accent2: '#f472b6', dim: 'rgba(236,72,153,0.15)',  glow: 'rgba(236,72,153,0.3)'  },
-  { name: 'Âmbar',     accent: '#eab308', accent2: '#facc15', dim: 'rgba(234,179,8,0.15)',   glow: 'rgba(234,179,8,0.3)'   },
-  { name: 'Lima',      accent: '#84cc16', accent2: '#a3e635', dim: 'rgba(132,204,22,0.15)',  glow: 'rgba(132,204,22,0.3)'  },
-  { name: 'Platina',   accent: '#e5e5e5', accent2: '#ffffff', dim: 'rgba(229,229,229,0.12)', glow: 'rgba(229,229,229,0.2)' },
+const THEMES = [
+  { name: 'Ferro',    accent: '#f97316', accent2: '#fb923c', dim: 'rgba(249,115,22,0.15)',  glow: 'rgba(249,115,22,0.3)'  },
+  { name: 'Rubi',     accent: '#ef4444', accent2: '#f87171', dim: 'rgba(239,68,68,0.15)',   glow: 'rgba(239,68,68,0.3)'   },
+  { name: 'Violeta',  accent: '#a855f7', accent2: '#c084fc', dim: 'rgba(168,85,247,0.15)',  glow: 'rgba(168,85,247,0.3)'  },
+  { name: 'Cobalto',  accent: '#3b82f6', accent2: '#60a5fa', dim: 'rgba(59,130,246,0.15)',  glow: 'rgba(59,130,246,0.3)'  },
+  { name: 'Esmeralda',accent: '#22c55e', accent2: '#4ade80', dim: 'rgba(34,197,94,0.15)',   glow: 'rgba(34,197,94,0.3)'   },
+  { name: 'Ciano',    accent: '#06b6d4', accent2: '#22d3ee', dim: 'rgba(6,182,212,0.15)',   glow: 'rgba(6,182,212,0.3)'   },
+  { name: 'Rosa',     accent: '#ec4899', accent2: '#f472b6', dim: 'rgba(236,72,153,0.15)',  glow: 'rgba(236,72,153,0.3)'  },
+  { name: 'Âmbar',    accent: '#eab308', accent2: '#facc15', dim: 'rgba(234,179,8,0.15)',   glow: 'rgba(234,179,8,0.3)'   },
+  { name: 'Lima',     accent: '#84cc16', accent2: '#a3e635', dim: 'rgba(132,204,22,0.15)',  glow: 'rgba(132,204,22,0.3)'  },
+  { name: 'Branco',   accent: '#e5e5e5', accent2: '#ffffff', dim: 'rgba(229,229,229,0.12)', glow: 'rgba(229,229,229,0.2)' },
 ];
 
-const BG_THEMES = [
-  { name: 'Preto',      bg: '#0a0a0a', bg2: '#111111', bg3: '#1a1a1a', bg4: '#222222', border: '#2a2a2a', text: '#f0f0f0', text2: '#a0a0a0', text3: '#606060' },
-  { name: 'Carvão',     bg: '#0d0d0d', bg2: '#161616', bg3: '#202020', bg4: '#2a2a2a', border: '#333333', text: '#f0f0f0', text2: '#a0a0a0', text3: '#666666' },
-  { name: 'Azul Escuro',bg: '#050b14', bg2: '#0a1628', bg3: '#0f1f38', bg4: '#162844', border: '#1e3a5c', text: '#e8f0fe', text2: '#8ab0d0', text3: '#4a6a8a' },
-  { name: 'Verde Escuro',bg: '#050d08', bg2: '#091410', bg3: '#0f1f14', bg4: '#162a1a', border: '#1e3a22', text: '#e8f5e9', text2: '#7ab88a', text3: '#3a6840' },
-  { name: 'Roxo Escuro', bg: '#0a0514', bg2: '#120920', bg3: '#1a0f2e', bg4: '#221438', border: '#2e1a4a', text: '#f0e8fe', text2: '#a080cc', text3: '#604880' },
-  { name: 'Cinza Frio',  bg: '#0c0c10', bg2: '#141418', bg3: '#1c1c22', bg4: '#242430', border: '#2e2e3a', text: '#ebebf0', text2: '#9898a8', text3: '#585868' },
-  { name: 'Claro',       bg: '#f5f5f5', bg2: '#ffffff', bg3: '#efefef', bg4: '#e5e5e5', border: '#d0d0d0', text: '#111111', text2: '#444444', text3: '#888888' },
-];
-
-function applyAccentTheme(theme) {
+function applyTheme(theme) {
   const root = document.documentElement;
   root.style.setProperty('--accent',     theme.accent);
   root.style.setProperty('--accent2',    theme.accent2);
@@ -3407,85 +3098,42 @@ function applyAccentTheme(theme) {
   renderThemeSwatches();
 }
 
-function applyBgTheme(theme) {
-  const root = document.documentElement;
-  root.style.setProperty('--bg',     theme.bg);
-  root.style.setProperty('--bg2',    theme.bg2);
-  root.style.setProperty('--bg3',    theme.bg3);
-  root.style.setProperty('--bg4',    theme.bg4);
-  root.style.setProperty('--border', theme.border);
-  root.style.setProperty('--text',   theme.text);
-  root.style.setProperty('--text2',  theme.text2);
-  root.style.setProperty('--text3',  theme.text3);
-  state.bgTheme = theme.name;
-  saveState();
-  renderThemeSwatches();
-}
-
 function renderThemeSwatches() {
-  // Accent swatches
-  const accentWrap = document.getElementById('theme-swatches');
-  if (accentWrap) {
-    accentWrap.innerHTML = ACCENT_THEMES.map(t => {
-      const isActive = (state.theme || 'Ferro') === t.name;
-      return `<div title="${t.name}" data-accent-theme="${t.name}"
-        style="width:34px;height:34px;border-radius:50%;background:${t.accent};cursor:pointer;
-          border:${isActive ? '3px solid white' : '3px solid transparent'};
-          box-shadow:${isActive ? '0 0 0 2px '+t.accent : '0 2px 8px rgba(0,0,0,0.4)'};
-          transition:all 0.2s;flex-shrink:0"></div>`;
-    }).join('');
-    accentWrap.querySelectorAll('[data-accent-theme]').forEach(s => {
-      s.addEventListener('click', () => {
-        const t = ACCENT_THEMES.find(t => t.name === s.dataset.accentTheme);
-        if (t) applyAccentTheme(t);
-      });
-    });
-  }
+  const wrap = document.getElementById('theme-swatches');
+  if (!wrap) return;
+  wrap.innerHTML = THEMES.map(t => {
+    const isActive = (state.theme || 'Ferro') === t.name;
+    return `
+      <div title="${t.name}" data-theme="${t.name}"
+        style="
+          width:36px; height:36px; border-radius:50%;
+          background:${t.accent};
+          cursor:pointer;
+          border: ${isActive ? '3px solid white' : '3px solid transparent'};
+          box-shadow: ${isActive ? '0 0 0 2px ' + t.accent : '0 2px 8px rgba(0,0,0,0.4)'};
+          transition: all 0.2s;
+          flex-shrink:0;
+        ">
+      </div>`;
+  }).join('');
 
-  // Background swatches — split circle showing bg + bg3
-  const bgWrap = document.getElementById('bg-swatches');
-  if (bgWrap) {
-    bgWrap.innerHTML = BG_THEMES.map(t => {
-      const isActive = (state.bgTheme || 'Preto') === t.name;
-      return `<div title="${t.name}" data-bg-theme="${t.name}"
-        style="width:34px;height:34px;border-radius:50%;cursor:pointer;
-          background:linear-gradient(135deg, ${t.bg} 50%, ${t.bg3} 50%);
-          border:${isActive ? '3px solid white' : '2px solid '+t.border};
-          box-shadow:${isActive ? '0 0 0 2px var(--accent)' : '0 2px 8px rgba(0,0,0,0.4)'};
-          transition:all 0.2s;flex-shrink:0"></div>`;
-    }).join('');
-    bgWrap.querySelectorAll('[data-bg-theme]').forEach(s => {
-      s.addEventListener('click', () => {
-        const t = BG_THEMES.find(t => t.name === s.dataset.bgTheme);
-        if (t) applyBgTheme(t);
-      });
+  wrap.querySelectorAll('[data-theme]').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      const theme = THEMES.find(t => t.name === swatch.dataset.theme);
+      if (theme) applyTheme(theme);
     });
-  }
+  });
 }
 
 function loadSavedTheme() {
   if (state.theme) {
-    const t = ACCENT_THEMES.find(t => t.name === state.theme);
-    if (t) {
+    const theme = THEMES.find(t => t.name === state.theme);
+    if (theme) {
       const root = document.documentElement;
-      root.style.setProperty('--accent',     t.accent);
-      root.style.setProperty('--accent2',    t.accent2);
-      root.style.setProperty('--accent-dim', t.dim);
-      root.style.setProperty('--accent-glow',t.glow);
-    }
-  }
-  if (state.bgTheme) {
-    const t = BG_THEMES.find(t => t.name === state.bgTheme);
-    if (t) {
-      const root = document.documentElement;
-      root.style.setProperty('--bg',     t.bg);
-      root.style.setProperty('--bg2',    t.bg2);
-      root.style.setProperty('--bg3',    t.bg3);
-      root.style.setProperty('--bg4',    t.bg4);
-      root.style.setProperty('--border', t.border);
-      root.style.setProperty('--text',   t.text);
-      root.style.setProperty('--text2',  t.text2);
-      root.style.setProperty('--text3',  t.text3);
+      root.style.setProperty('--accent',     theme.accent);
+      root.style.setProperty('--accent2',    theme.accent2);
+      root.style.setProperty('--accent-dim', theme.dim);
+      root.style.setProperty('--accent-glow',theme.glow);
     }
   }
 }
@@ -3495,15 +3143,6 @@ function loadSavedTheme() {
 // ============================================================
 loadState();
 loadSavedTheme();
-// Auto-compute week from plan date on load
-if (state.planStartDate) {
-  const _start = new Date(state.planStartDate);
-  const _today = new Date();
-  _start.setHours(0,0,0,0); _today.setHours(0,0,0,0);
-  const _diff = Math.floor((_today - _start)/(1000*60*60*24));
-  const _computed = Math.min(_diff < 0 ? 1 : Math.floor(_diff/7)+1, state.totalWeeks||12);
-  if (_computed !== state.currentWeek) { state.currentWeek = _computed; saveState(); }
-}
 checkStorageWarning();
 renderHome();
 

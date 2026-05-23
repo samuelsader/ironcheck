@@ -1444,18 +1444,42 @@ html, body {
 
     <!-- EDIT SCREEN -->
     <div class="screen" id="edit-screen">
-      <div class="section-title" style="margin-bottom:14px">Editar Treinos</div>
-      <div class="edit-workout-list" id="edit-workout-list"></div>
-      <button class="add-workout-btn" id="add-workout-btn"
-        style="display:flex;align-items:center;justify-content:center;gap:8px;
-          width:100%;padding:13px;margin-bottom:10px;
-          background:var(--accent-dim);border:1px dashed var(--accent);
-          border-radius:var(--radius);color:var(--accent);
-          font-family:'Barlow Condensed',sans-serif;font-size:14px;
-          font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
-        + Novo Treino
-      </button>
-      <button class="save-edits-btn" id="save-edits-btn">💾 Salvar Alterações</button>
+      <!-- Sub-tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <div class="week-tab active" id="edit-tab-treinos" style="flex:1;text-align:center;border-radius:8px">💪 Treinos</div>
+        <div class="week-tab" id="edit-tab-cardio" style="flex:1;text-align:center;border-radius:8px">🏃 Cardio</div>
+      </div>
+
+      <!-- Treinos panel -->
+      <div id="edit-treinos-panel">
+        <div class="edit-workout-list" id="edit-workout-list"></div>
+        <button class="add-workout-btn" id="add-workout-btn"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;
+            width:100%;padding:13px;margin-bottom:10px;
+            background:var(--accent-dim);border:1px dashed var(--accent);
+            border-radius:var(--radius);color:var(--accent);
+            font-family:'Barlow Condensed',sans-serif;font-size:14px;
+            font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+          + Novo Treino
+        </button>
+        <button class="save-edits-btn" id="save-edits-btn">💾 Salvar Treinos</button>
+      </div>
+
+      <!-- Cardio panel -->
+      <div id="edit-cardio-panel" style="display:none">
+        <div class="section-title" style="margin-bottom:10px">Tipos de Cardio</div>
+        <div id="cardio-types-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button id="add-cardio-type-btn"
+          style="display:flex;align-items:center;justify-content:center;gap:8px;
+            width:100%;padding:13px;margin-top:10px;margin-bottom:10px;
+            background:var(--accent-dim);border:1px dashed var(--accent);
+            border-radius:var(--radius);color:var(--accent);
+            font-family:'Barlow Condensed',sans-serif;font-size:14px;
+            font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer">
+          + Novo Tipo de Cardio
+        </button>
+        <button class="save-edits-btn" id="save-cardio-types-btn">💾 Salvar Cardio</button>
+      </div>
       <div style="height:20px"></div>
     </div>
 
@@ -1694,8 +1718,14 @@ const DEFAULT_DATA = {
   logs: {},
   // seriesConfig[exerciseId] = number of series (default 1)
   seriesConfig: {},
-  // cardio[week][day] = { done: bool, type: 'bike'|'esteira'|'outro', outro: '', minutes: '' }
-  cardio: {}
+  // cardio[week][day] = { done: bool, type: string (id), minutes: '' }
+  cardio: {},
+  // cardioTypes: array of { id, label, emoji }
+  cardioTypes: [
+    { id: 'bike',    label: 'Bike',    emoji: '🚴' },
+    { id: 'esteira', label: 'Esteira', emoji: '🏃' },
+    { id: 'outro',   label: 'Outro',   emoji: '⚡' }
+  ]
 };
 
 let state = {};
@@ -1745,6 +1775,8 @@ function loadState() {
       if (!state.logs) state.logs = {};
       if (!state.weeklyDone) state.weeklyDone = {};
       if (!state.currentWeek) state.currentWeek = 1;
+      if (!state.cardioTypes || state.cardioTypes.length === 0) state.cardioTypes = DEFAULT_DATA.cardioTypes;
+      if (!state.seriesConfig) state.seriesConfig = {};
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT_DATA));
     }
@@ -1873,11 +1905,11 @@ function getCardioUniqueOutro() {
   return Array.from(set);
 }
 
-function getCardioLabel(type, outro) {
-  if (type === 'bike') return '🚴 Bike';
-  if (type === 'esteira') return '🏃 Esteira';
-  if (type === 'outro') return '⚡ ' + (outro || 'Outro');
-  return '—';
+function getCardioLabel(typeId) {
+  if (!typeId) return '—';
+  const types = state.cardioTypes || DEFAULT_DATA.cardioTypes;
+  const t = types.find(t => t.id === typeId);
+  return t ? `${t.emoji} ${t.label}` : typeId;
 }
 
 function getLog(workoutId, exerciseId, week) {
@@ -2346,12 +2378,18 @@ function renderExercises() {
     const seriesCount = getSeriesCount(ex.id);
     const usingSeries = seriesCount > 1;
 
-    // Only show previous week entry
-    const prevLog = activeWeek > 1 ? getLog(activeWorkoutId, ex.id, activeWeek - 1) : null;
-    const prevHasData = prevLog && (prevLog.reps || prevLog.weight || (prevLog.seriesWeights && prevLog.seriesWeights.some(v=>v)));
-    const prevWeightStr = prevLog ? getWeightDisplay(prevLog) : null;
-    const lastLabel = prevHasData
-      ? `Sem ${activeWeek-1}: ${prevWeightStr} · ${prevLog.reps || '—'}`
+    // Find last entry regardless of week gaps — scan backwards from activeWeek-1
+    let lastLog = null;
+    let lastLogWeek = null;
+    const maxWeek = state.totalWeeks || 52;
+    for (let w = activeWeek - 1; w >= 1; w--) {
+      const l = getLog(activeWorkoutId, ex.id, w);
+      if (l.reps || l.weight || (l.seriesWeights && l.seriesWeights.some(v => v))) {
+        lastLog = l; lastLogWeek = w; break;
+      }
+    }
+    const lastLabel = lastLog
+      ? `Sem ${lastLogWeek}: ${getWeightDisplay(lastLog)} · ${lastLog.reps || '—'}`
       : 'Sem registro anterior';
 
     // Series expand state — stored per-exercise in DOM via id
@@ -2572,7 +2610,7 @@ function renderCardioDays() {
           <div class="cardio-day-name">${day}</div>
           <div class="cardio-day-workout">${workout ? workout.name : 'Descanso'}</div>
           ${isDone
-            ? `<div class="cardio-summary-pill">${getCardioLabel(log.type, log.outro)} · ${log.minutes}min</div>
+            ? `<div class="cardio-summary-pill">${getCardioLabel(log.type)} · ${log.minutes}min</div>
                <div class="cardio-expand-arrow" id="arrow_${day}">▾</div>`
             : `<label class="toggle-switch" onclick="event.stopPropagation()">
                  <input type="checkbox" class="cardio-toggle" data-day="${day}">
@@ -2581,13 +2619,12 @@ function renderCardioDays() {
           }
         </div>
         <div class="cardio-body" id="cardio-body-${day}">
-          <div class="cardio-type-row">
-            <div class="cardio-type-btn ${log.type === 'bike' ? 'selected' : ''}" data-day="${day}" data-type="bike">🚴 Bike</div>
-            <div class="cardio-type-btn ${log.type === 'esteira' ? 'selected' : ''}" data-day="${day}" data-type="esteira">🏃 Esteira</div>
-            <div class="cardio-type-btn ${log.type === 'outro' ? 'selected' : ''}" data-day="${day}" data-type="outro">⚡ Outro</div>
+          <div class="cardio-type-row" style="flex-wrap:wrap">
+            ${(state.cardioTypes || DEFAULT_DATA.cardioTypes).map(t => `
+              <div class="cardio-type-btn ${log.type === t.id ? 'selected' : ''}" data-day="${day}" data-type="${t.id}">
+                ${t.emoji} ${t.label}
+              </div>`).join('')}
           </div>
-          <input type="text" class="cardio-outro-input ${log.type === 'outro' ? 'visible' : ''}"
-            id="cardio-outro-${day}" placeholder="Qual atividade?" value="${log.outro || ''}">
           <div class="cardio-time-row">
             <div class="cardio-time-label">Duração</div>
             <input type="number" inputmode="numeric" class="cardio-time-input gym-input"
@@ -2633,11 +2670,8 @@ function renderCardioDays() {
   list.querySelectorAll('.cardio-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const day = btn.dataset.day;
-      const type = btn.dataset.type;
       list.querySelectorAll(`.cardio-type-btn[data-day="${day}"]`).forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
-      const outro = document.getElementById(`cardio-outro-${day}`);
-      if (outro) outro.classList.toggle('visible', type === 'outro');
     });
   });
 
@@ -2647,11 +2681,10 @@ function renderCardioDays() {
       const day = btn.dataset.day;
       const selectedType = list.querySelector(`.cardio-type-btn.selected[data-day="${day}"]`);
       const type = selectedType ? selectedType.dataset.type : '';
-      const outro = document.getElementById(`cardio-outro-${day}`)?.value?.trim() || '';
       const minutes = document.getElementById(`cardio-min-${day}`)?.value?.trim() || '';
       if (!type) { showToast('Selecione o tipo de cardio'); return; }
       if (!minutes || parseInt(minutes) < 1) { showToast('Informe a duração'); return; }
-      setCardioLog(week, day, { done: true, type, outro, minutes });
+      setCardioLog(week, day, { done: true, type, minutes });
       showToast('Cardio salvo! 🏃');
       renderCardioDays();
     });
@@ -3092,8 +3125,36 @@ function chartOptions(yLabel) {
 // ============================================================
 // Track which workout is open in edit screen
 let editOpenWid = null;
+let editTab = 'treinos';
 
 function renderEditScreen() {
+  // Wire sub-tabs on first call
+  const tabTreinos = document.getElementById('edit-tab-treinos');
+  const tabCardio = document.getElementById('edit-tab-cardio');
+  const treinosPanel = document.getElementById('edit-treinos-panel');
+  const cardioPanel = document.getElementById('edit-cardio-panel');
+
+  tabTreinos.onclick = () => {
+    editTab = 'treinos';
+    tabTreinos.classList.add('active'); tabCardio.classList.remove('active');
+    treinosPanel.style.display = ''; cardioPanel.style.display = 'none';
+  };
+  tabCardio.onclick = () => {
+    editTab = 'cardio';
+    tabCardio.classList.add('active'); tabTreinos.classList.remove('active');
+    cardioPanel.style.display = ''; treinosPanel.style.display = 'none';
+    renderEditCardioTypes();
+  };
+
+  // Restore active tab
+  if (editTab === 'cardio') {
+    tabCardio.classList.add('active'); tabTreinos.classList.remove('active');
+    cardioPanel.style.display = ''; treinosPanel.style.display = 'none';
+    renderEditCardioTypes();
+  } else {
+    tabTreinos.classList.add('active'); tabCardio.classList.remove('active');
+    treinosPanel.style.display = ''; cardioPanel.style.display = 'none';
+  }
   const list = document.getElementById('edit-workout-list');
   list.innerHTML = state.workouts.map((w) => `
     <div class="edit-workout-item" data-wid="${w.id}">
@@ -3238,6 +3299,105 @@ function showConfirmModal(title, message, onConfirm) {
   overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('open'); };
 }
 
+function renderEditCardioTypes() {
+  const types = state.cardioTypes || DEFAULT_DATA.cardioTypes;
+  const list = document.getElementById('cardio-types-list');
+  if (!list) return;
+
+  const EMOJI_OPTIONS = ['🚴','🏃','⚡','🏊','🚣','⛹️','🤸','🧘','🏋️','🥊','🤾','🚵','🧗','🤼','🏇'];
+
+  list.innerHTML = types.map((t, i) => `
+    <div class="edit-workout-item" style="padding:0" data-ctidx="${i}">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px">
+        <!-- Emoji picker -->
+        <div style="position:relative;flex-shrink:0">
+          <button class="cardio-emoji-btn" data-idx="${i}"
+            style="width:36px;height:36px;background:var(--bg4);border:1px solid var(--border);
+              border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">
+            ${t.emoji}
+          </button>
+          <div class="emoji-picker" id="emoji-picker-${i}"
+            style="display:none;position:absolute;top:40px;left:0;z-index:50;
+              background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+              padding:8px;display:none;flex-wrap:wrap;gap:4px;width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.5)">
+            ${EMOJI_OPTIONS.map(e => `
+              <div class="emoji-opt" data-idx="${i}" data-emoji="${e}"
+                style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+                  font-size:18px;cursor:pointer;border-radius:6px;background:var(--bg3)">
+                ${e}
+              </div>`).join('')}
+          </div>
+        </div>
+        <!-- Label input -->
+        <input type="text" class="edit-ex-input cardio-type-label-input" data-idx="${i}"
+          value="${t.label}" placeholder="Nome do cardio"
+          style="flex:1;font-size:14px;font-weight:600">
+        <!-- Delete -->
+        <div class="delete-ex-btn delete-cardio-type-btn" data-idx="${i}"
+          style="flex-shrink:0">✕</div>
+      </div>
+    </div>
+  `).join('');
+
+  // Emoji picker toggle
+  list.querySelectorAll('.cardio-emoji-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = btn.dataset.idx;
+      const picker = document.getElementById(`emoji-picker-${idx}`);
+      const isOpen = picker.style.display === 'flex';
+      // close all
+      list.querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
+      picker.style.display = isOpen ? 'none' : 'flex';
+    });
+  });
+
+  // Emoji select
+  list.querySelectorAll('.emoji-opt').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = parseInt(opt.dataset.idx);
+      const emoji = opt.dataset.emoji;
+      state.cardioTypes[idx].emoji = emoji;
+      saveState();
+      renderEditCardioTypes();
+    });
+  });
+
+  // Close pickers on outside click
+  document.addEventListener('click', () => {
+    list.querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
+  }, { once: true });
+
+  // Delete type
+  list.querySelectorAll('.delete-cardio-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      if (state.cardioTypes.length <= 1) { showToast('Mínimo 1 tipo'); return; }
+      const typeName = state.cardioTypes[idx].label;
+      showConfirmModal(
+        `Excluir "${typeName}"?`,
+        'Registros de cardio já salvos com este tipo não serão apagados, mas o tipo não aparecerá mais para seleção.',
+        () => {
+          state.cardioTypes.splice(idx, 1);
+          saveState();
+          renderEditCardioTypes();
+        }
+      );
+    });
+  });
+}
+
+function saveCardioTypeEdits() {
+  const inputs = document.querySelectorAll('.cardio-type-label-input');
+  inputs.forEach(input => {
+    const idx = parseInt(input.dataset.idx);
+    if (state.cardioTypes[idx]) {
+      state.cardioTypes[idx].label = input.value.trim() || state.cardioTypes[idx].label;
+    }
+  });
+}
+
 function saveEditInputs() {
   document.querySelectorAll('.edit-workout-name-input').forEach(input => {
     const workout = state.workouts.find(w => w.id === input.dataset.wid);
@@ -3357,6 +3517,20 @@ document.getElementById('add-workout-btn').addEventListener('click', () => {
   }, 100);
 });
 
+document.getElementById('add-cardio-type-btn').addEventListener('click', () => {
+  saveCardioTypeEdits();
+  if (!state.cardioTypes) state.cardioTypes = [...DEFAULT_DATA.cardioTypes];
+  state.cardioTypes.push({ id: `cardio_${Date.now()}`, label: 'Novo Tipo', emoji: '⚡' });
+  saveState();
+  renderEditCardioTypes();
+});
+
+document.getElementById('save-cardio-types-btn').addEventListener('click', () => {
+  saveCardioTypeEdits();
+  saveState();
+  showToast('Tipos de cardio salvos! ✅');
+});
+
 document.getElementById('save-edits-btn').addEventListener('click', () => {
   saveEditInputs();
   saveState();
@@ -3380,16 +3554,25 @@ function computeCurrentWeekFromPlan() {
 }
 
 function renderSettings() {
-  // Auto-compute week if plan date is set
+  // Auto-compute week if plan date is set — only overwrite if no logs exist
   if (state.planStartDate) {
-    const computed = computeCurrentWeekFromPlan();
-    if (computed !== null && computed !== state.currentWeek) {
-      state.currentWeek = computed;
-      saveState();
+    const _hasLogs = state.logs && Object.keys(state.logs).some(wid =>
+      Object.keys(state.logs[wid] || {}).some(exid =>
+        Object.keys(state.logs[wid][exid] || {}).length > 0
+      )
+    );
+    if (!_hasLogs) {
+      const computed = computeCurrentWeekFromPlan();
+      if (computed !== null && computed !== state.currentWeek) {
+        state.currentWeek = computed;
+        saveState();
+      }
     }
     document.getElementById('manual-week-section').style.display = 'none';
     document.getElementById('plan-auto-note').textContent =
-      `Semana atual calculada automaticamente: Semana ${state.currentWeek}`;
+      state.logs && _hasLogs
+        ? `Data salva. Semana atual: ${state.currentWeek} (ajuste manual acima se necessário)`
+        : `Semana atual calculada automaticamente: Semana ${state.currentWeek}`;
   } else {
     document.getElementById('manual-week-section').style.display = '';
     document.getElementById('plan-auto-note').textContent =
@@ -3404,7 +3587,23 @@ function renderSettings() {
   if (dateInput) {
     dateInput.value = state.planStartDate || '';
     dateInput.onchange = () => {
-      state.planStartDate = dateInput.value || null;
+      const newDate = dateInput.value || null;
+      state.planStartDate = newDate;
+      // When setting a plan date, do NOT auto-change currentWeek if user has logs
+      // The week will update on next app open only if no conflict
+      if (newDate) {
+        const computed = computeCurrentWeekFromPlan();
+        const hasAnyLogs = state.logs && Object.keys(state.logs).some(wid =>
+          Object.keys(state.logs[wid] || {}).some(exid =>
+            Object.keys(state.logs[wid][exid] || {}).length > 0
+          )
+        );
+        if (!hasAnyLogs) {
+          // No data yet — safe to auto-set week
+          state.currentWeek = computed || 1;
+        }
+        // If has logs: keep currentWeek as is, just save the date for future reference
+      }
       saveState();
       renderSettings();
       renderHome();
@@ -3662,14 +3861,21 @@ function loadSavedTheme() {
 // ============================================================
 loadState();
 loadSavedTheme();
-// Auto-compute week from plan date on load
+// Auto-compute week from plan date on load — only if no existing log data
 if (state.planStartDate) {
-  const _start = new Date(state.planStartDate);
-  const _today = new Date();
-  _start.setHours(0,0,0,0); _today.setHours(0,0,0,0);
-  const _diff = Math.floor((_today - _start)/(1000*60*60*24));
-  const _computed = Math.min(_diff < 0 ? 1 : Math.floor(_diff/7)+1, state.totalWeeks||12);
-  if (_computed !== state.currentWeek) { state.currentWeek = _computed; saveState(); }
+  const _hasAnyLogs = state.logs && Object.keys(state.logs).some(wid =>
+    Object.keys(state.logs[wid] || {}).some(exid =>
+      Object.keys(state.logs[wid][exid] || {}).length > 0
+    )
+  );
+  if (!_hasAnyLogs) {
+    const _start = new Date(state.planStartDate);
+    const _today = new Date();
+    _start.setHours(0,0,0,0); _today.setHours(0,0,0,0);
+    const _diff = Math.floor((_today - _start)/(1000*60*60*24));
+    const _computed = Math.min(_diff < 0 ? 1 : Math.floor(_diff/7)+1, state.totalWeeks||12);
+    if (_computed !== state.currentWeek) { state.currentWeek = _computed; saveState(); }
+  }
 }
 checkStorageWarning();
 renderHome();

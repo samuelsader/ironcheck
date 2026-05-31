@@ -1542,6 +1542,41 @@ html, body {
   display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.auth-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.auth-password-wrap input {
+  padding-right: 44px;
+}
+.auth-eye-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  line-height: 1;
+}
+.auth-eye-btn:active { opacity: 1; }
+.auth-btn-link {
+  background: none;
+  border: none;
+  color: var(--text3);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 8px 0 0;
+  width: 100%;
+  text-align: center;
+  text-decoration: underline;
+  font-family: 'Barlow', sans-serif;
+  transition: color 0.2s;
+}
+.auth-btn-link:active { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1564,11 +1599,33 @@ html, body {
       </div>
       <div class="auth-field">
         <label>Senha</label>
-        <input type="password" id="login-password" placeholder="Sua senha" autocomplete="current-password">
+        <div class="auth-password-wrap">
+          <input type="password" id="login-password" placeholder="Sua senha" autocomplete="current-password">
+          <button type="button" class="auth-eye-btn" onclick="togglePassword('login-password', this)" tabindex="-1">👁</button>
+        </div>
       </div>
       <button class="auth-btn" id="btn-login">ENTRAR</button>
+      <button class="auth-btn-link" id="btn-forgot-password">Esqueci minha senha</button>
       <div class="auth-divider">ou</div>
       <button class="auth-btn-secondary" id="btn-goto-register">Criar conta</button>
+    </div>
+  </div>
+
+  <!-- TELA ESQUECI A SENHA -->
+  <div id="auth-screen-forgot" class="auth-screen-view" style="width:100%;max-width:400px;display:none;flex-direction:column;align-items:center;">
+    <div class="auth-logo">IRONCHECK</div>
+    <div class="auth-tagline">RECUPERAR ACESSO</div>
+    <div class="auth-card">
+      <div class="auth-title">Esqueci minha senha</div>
+      <div id="forgot-error" class="auth-error"></div>
+      <div id="forgot-success" class="auth-success"></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Digite seu email e enviaremos um link para você criar uma nova senha.</p>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="forgot-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <button class="auth-btn" id="btn-send-reset">ENVIAR LINK</button>
+      <button class="auth-btn-secondary" id="btn-back-to-login">Voltar ao login</button>
     </div>
   </div>
 
@@ -1592,11 +1649,14 @@ html, body {
       </div>
       <div class="auth-field">
         <label>Senha (mín. 6 caracteres)</label>
-        <input type="password" id="reg-password" placeholder="Crie uma senha" autocomplete="new-password">
+        <div class="auth-password-wrap">
+          <input type="password" id="reg-password" placeholder="Crie uma senha" autocomplete="new-password">
+          <button type="button" class="auth-eye-btn" onclick="togglePassword('reg-password', this)" tabindex="-1">👁</button>
+        </div>
       </div>
 
       <hr class="auth-section-divider">
-      <div class="auth-section-label">Seus dados</div>
+      <div class="auth-section-label">Dados físicos</div>
 
       <div class="auth-row">
         <div class="auth-field">
@@ -1614,16 +1674,56 @@ html, body {
           <input type="number" id="reg-age" placeholder="25" min="10" max="99">
         </div>
         <div class="auth-field">
-          <label>Dias/semana</label>
-          <select id="reg-days">
+          <label>Sexo</label>
+          <select id="reg-gender">
             <option value="">Selecione</option>
-            <option value="2">2 dias</option>
-            <option value="3">3 dias</option>
-            <option value="4">4 dias</option>
-            <option value="5">5 dias</option>
-            <option value="6">6 dias</option>
+            <option value="M">Masculino</option>
+            <option value="F">Feminino</option>
+            <option value="outro">Outro</option>
           </select>
         </div>
+      </div>
+
+      <hr class="auth-section-divider">
+      <div class="auth-section-label">Rotina de treino</div>
+
+      <div class="auth-field">
+        <label>Quantos dias por semana você pretende treinar?</label>
+        <select id="reg-days">
+          <option value="">Selecione</option>
+          <option value="2">2 dias por semana</option>
+          <option value="3">3 dias por semana</option>
+          <option value="4">4 dias por semana</option>
+          <option value="5">5 dias por semana</option>
+          <option value="6">6 dias por semana</option>
+        </select>
+      </div>
+
+      <div class="auth-field">
+        <label>Há quanto tempo você treina? (anos)</label>
+        <input type="number" id="reg-experience" placeholder="Ex: 2.5" min="0" max="50" step="0.5">
+      </div>
+
+      <div class="auth-field">
+        <label>Objetivo principal</label>
+        <select id="reg-goal">
+          <option value="">Selecione</option>
+          <option value="hipertrofia">Hipertrofia (ganhar músculo)</option>
+          <option value="emagrecimento">Emagrecimento</option>
+          <option value="forca">Ganho de força</option>
+          <option value="condicionamento">Condicionamento físico</option>
+          <option value="saude">Saúde e bem-estar</option>
+        </select>
+      </div>
+
+      <div class="auth-field">
+        <label>Nível de experiência</label>
+        <select id="reg-level">
+          <option value="">Selecione</option>
+          <option value="iniciante">Iniciante (menos de 1 ano)</option>
+          <option value="intermediario">Intermediário (1–3 anos)</option>
+          <option value="avancado">Avançado (3+ anos)</option>
+        </select>
       </div>
 
       <button class="auth-btn" id="btn-register">CRIAR CONTA</button>
@@ -1936,6 +2036,8 @@ html, body {
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -4184,8 +4286,29 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Persistência — mantém sessão mesmo fechando o app no iPhone
+// Sessão persistente — não pede login de novo ao reabrir o app
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+// EmailJS
+emailjs.init('VdSxqwraE-RDoMNi6');
+
+// --- Segurança: sanitizar inputs ---
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/[<>\"'`]/g, '').trim().slice(0, 200);
+}
+
+// --- Ver/ocultar senha ---
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.style.opacity = '1';
+  } else {
+    input.type = 'password';
+    btn.style.opacity = '0.5';
+  }
+}
 
 // --- Navegação entre telas de auth ---
 function showAuthScreen(name) {
@@ -4203,26 +4326,42 @@ function hideAuthOverlay() {
   document.getElementById('btn-logout-app').style.display = 'inline-block';
 }
 
-// --- Tradução de erros do Firebase ---
+// --- Tradução de erros Firebase ---
 function firebaseErrorMsg(code) {
   const msgs = {
-    'auth/user-not-found':      'Email não encontrado.',
-    'auth/wrong-password':      'Senha incorreta.',
-    'auth/invalid-email':       'Email inválido.',
-    'auth/email-already-in-use':'Este email já está cadastrado.',
-    'auth/weak-password':       'Senha muito fraca. Use pelo menos 6 caracteres.',
-    'auth/too-many-requests':   'Muitas tentativas. Aguarde alguns minutos.',
+    'auth/user-not-found':         'Email não encontrado.',
+    'auth/wrong-password':         'Senha incorreta.',
+    'auth/invalid-email':          'Email inválido.',
+    'auth/email-already-in-use':   'Este email já está cadastrado.',
+    'auth/weak-password':          'Senha muito fraca. Use pelo menos 6 caracteres.',
+    'auth/too-many-requests':      'Muitas tentativas. Aguarde alguns minutos.',
     'auth/network-request-failed': 'Sem conexão. Verifique sua internet.',
-    'auth/invalid-credential':  'Email ou senha incorretos.',
+    'auth/invalid-credential':     'Email ou senha incorretos.',
   };
   return msgs[code] || 'Erro inesperado. Tente novamente.';
 }
 
+// --- Gerar treinos em branco baseados nos dias da semana ---
+function generateBlankWorkouts(daysPerWeek) {
+  const labels = ['A','B','C','D','E','F'];
+  const days   = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const workouts = [];
+  for (let i = 0; i < daysPerWeek; i++) {
+    workouts.push({
+      id: 'workout_' + (i + 1),
+      name: 'Treino ' + labels[i],
+      day: days[i],
+      exercises: []
+    });
+  }
+  return workouts;
+}
+
 // --- LOGIN ---
 document.getElementById('btn-login').addEventListener('click', async () => {
-  const email = document.getElementById('login-email').value.trim();
+  const email    = sanitizeInput(document.getElementById('login-email').value);
   const password = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
+  const errEl    = document.getElementById('login-error');
   errEl.classList.remove('active');
 
   if (!email || !password) {
@@ -4246,22 +4385,71 @@ document.getElementById('btn-login').addEventListener('click', async () => {
   }
 });
 
-// --- CADASTRO ---
-document.getElementById('btn-register').addEventListener('click', async () => {
-  const name     = document.getElementById('reg-name').value.trim();
-  const email    = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const weight   = document.getElementById('reg-weight').value;
-  const height   = document.getElementById('reg-height').value;
-  const age      = document.getElementById('reg-age').value;
-  const days     = document.getElementById('reg-days').value;
-  const errEl    = document.getElementById('register-error');
-  const sucEl    = document.getElementById('register-success');
+// --- ESQUECI A SENHA ---
+document.getElementById('btn-forgot-password').addEventListener('click', () => showAuthScreen('forgot'));
+document.getElementById('btn-back-to-login').addEventListener('click', () => showAuthScreen('login'));
+
+document.getElementById('btn-send-reset').addEventListener('click', async () => {
+  const email = sanitizeInput(document.getElementById('forgot-email').value);
+  const errEl = document.getElementById('forgot-error');
+  const sucEl = document.getElementById('forgot-success');
   errEl.classList.remove('active');
   sucEl.classList.remove('active');
 
-  if (!name || !email || !password || !weight || !height || !age || !days) {
-    errEl.textContent = 'Preencha todos os campos.';
+  if (!email) {
+    errEl.textContent = 'Digite seu email.';
+    errEl.classList.add('active');
+    return;
+  }
+
+  const btn = document.getElementById('btn-send-reset');
+  btn.disabled = true;
+  btn.textContent = 'ENVIANDO...';
+
+  try {
+    await auth.sendPasswordResetEmail(email);
+    sucEl.textContent = 'Link enviado! Verifique sua caixa de entrada (e o spam).';
+    sucEl.classList.add('active');
+    btn.textContent = 'LINK ENVIADO ✓';
+  } catch(e) {
+    errEl.textContent = firebaseErrorMsg(e.code);
+    errEl.classList.add('active');
+    btn.disabled = false;
+    btn.textContent = 'ENVIAR LINK';
+  }
+});
+
+// --- CADASTRO ---
+document.getElementById('btn-register').addEventListener('click', async () => {
+  const name       = sanitizeInput(document.getElementById('reg-name').value);
+  const email      = sanitizeInput(document.getElementById('reg-email').value);
+  const password   = document.getElementById('reg-password').value;
+  const weight     = document.getElementById('reg-weight').value;
+  const height     = document.getElementById('reg-height').value;
+  const age        = document.getElementById('reg-age').value;
+  const gender     = document.getElementById('reg-gender').value;
+  const days       = document.getElementById('reg-days').value;
+  const experience = document.getElementById('reg-experience').value;
+  const goal       = document.getElementById('reg-goal').value;
+  const level      = document.getElementById('reg-level').value;
+  const errEl      = document.getElementById('register-error');
+  const sucEl      = document.getElementById('register-success');
+  errEl.classList.remove('active');
+  sucEl.classList.remove('active');
+
+  // Validação
+  if (!name || !email || !password || !weight || !height || !age || !gender || !days || !goal || !level) {
+    errEl.textContent = 'Preencha todos os campos obrigatórios.';
+    errEl.classList.add('active');
+    return;
+  }
+  if (password.length < 6) {
+    errEl.textContent = 'Senha deve ter pelo menos 6 caracteres.';
+    errEl.classList.add('active');
+    return;
+  }
+  if (Number(weight) < 30 || Number(weight) > 300) {
+    errEl.textContent = 'Peso inválido.';
     errEl.classList.add('active');
     return;
   }
@@ -4272,19 +4460,43 @@ document.getElementById('btn-register').addEventListener('click', async () => {
 
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
-    const uid = cred.user.uid;
+    const uid  = cred.user.uid;
 
-    // Salvar dados do usuário no Firestore com status "pending"
-    await db.collection('users').doc(uid).set({
+    const userData = {
       name,
       email,
-      weight: Number(weight),
-      height: Number(height),
-      age: Number(age),
+      weight:     Number(weight),
+      height:     Number(height),
+      age:        Number(age),
+      gender,
       daysPerWeek: Number(days),
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+      experience:  experience ? Number(experience) : 0,
+      goal,
+      level,
+      status:     'pending',
+      createdAt:  firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection('users').doc(uid).set(userData);
+
+    // Notificar via EmailJS
+    try {
+      await emailjs.send('service_iktd0gk', 'template_e964zre', {
+        user_name:    name,
+        user_email:   email,
+        weight:       weight + 'kg',
+        height:       height + 'cm',
+        age:          age + ' anos',
+        gender:       gender === 'M' ? 'Masculino' : gender === 'F' ? 'Feminino' : 'Outro',
+        days_per_week: days + 'x por semana',
+        experience:   (experience || '0') + ' anos',
+        goal,
+        level
+      });
+    } catch(emailErr) {
+      // Não bloquear cadastro se email falhar
+      console.warn('EmailJS falhou:', emailErr);
+    }
 
     // onAuthStateChanged vai detectar e mostrar tela de pendente
   } catch(e) {
@@ -4330,11 +4542,9 @@ document.getElementById('btn-goto-login').addEventListener('click', () => showAu
 // --- OBSERVER PRINCIPAL — controla tudo ---
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
-    // Não logado — mostrar tela de login
     showAuthOverlay();
     showAuthScreen('login');
     document.getElementById('btn-logout-app').style.display = 'none';
-    // Resetar botões
     const btnL = document.getElementById('btn-login');
     btnL.disabled = false; btnL.textContent = 'ENTRAR';
     const btnR = document.getElementById('btn-register');
@@ -4342,17 +4552,30 @@ auth.onAuthStateChanged(async (user) => {
     return;
   }
 
-  // Logado — verificar status no Firestore
   try {
     const doc = await db.collection('users').doc(user.uid).get();
     if (doc.exists && doc.data().status === 'approved') {
+      // Aplicar treinos em branco baseados nos dias cadastrados
+      const data = doc.data();
+      if (data.daysPerWeek && (!state.workouts || state.workouts.length === 0 ||
+          state.workouts.every(w => w.exercises && w.exercises.length === 0 &&
+          w.id && w.id.startsWith('workout_')))) {
+        // Só substituir se o usuário ainda não tem treinos personalizados
+        const hasCustomWorkouts = state.workouts && state.workouts.some(w =>
+          w.exercises && w.exercises.length > 0
+        );
+        if (!hasCustomWorkouts) {
+          state.workouts = generateBlankWorkouts(data.daysPerWeek);
+          saveState();
+        }
+      }
       hideAuthOverlay();
     } else {
       showAuthOverlay();
       showAuthScreen('pending');
     }
   } catch(e) {
-    // Se falhar (sem internet), deixar entrar — app ainda funciona offline
+    // Sem internet — deixar entrar, app funciona offline
     hideAuthOverlay();
   }
 });

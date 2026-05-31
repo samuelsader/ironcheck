@@ -1345,9 +1345,317 @@ html, body {
 .badge-orange { background: var(--accent-dim); color: var(--accent); }
 .badge-blue { background: rgba(59,130,246,0.15); color: var(--blue); }
 
+
+/* ============================================================
+   AUTH SCREENS
+   ============================================================ */
+#auth-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 99999;
+  overflow-y: auto;
+  font-family: 'Barlow', sans-serif;
+}
+#auth-overlay.active { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 48px 20px 40px; }
+.auth-logo {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.auth-tagline {
+  font-size: 13px;
+  color: var(--text3);
+  margin-bottom: 36px;
+  letter-spacing: 0.5px;
+}
+.auth-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 400px;
+}
+.auth-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+  letter-spacing: 0.5px;
+}
+.auth-field {
+  margin-bottom: 14px;
+}
+.auth-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text2);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.auth-field input, .auth-field select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-size: 15px;
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  transition: border-color 0.2s;
+}
+.auth-field input:focus, .auth-field select:focus {
+  border-color: var(--accent);
+}
+.auth-field select option { background: var(--bg3); }
+.auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.auth-btn {
+  width: 100%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: opacity 0.2s;
+}
+.auth-btn:active { opacity: 0.8; }
+.auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.auth-btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: border-color 0.2s, color 0.2s;
+}
+.auth-btn-secondary:active { border-color: var(--accent); color: var(--accent); }
+.auth-error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #ef4444;
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: none;
+}
+.auth-error.active { display: block; }
+.auth-success {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--green);
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: none;
+}
+.auth-success.active { display: block; }
+.auth-divider {
+  text-align: center;
+  color: var(--text3);
+  font-size: 12px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.auth-section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 18px 0 16px;
+}
+.auth-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+/* Pending screen */
+.auth-pending-icon { font-size: 52px; margin-bottom: 16px; text-align: center; }
+.auth-pending-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 10px;
+}
+.auth-pending-text {
+  color: var(--text2);
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.auth-pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(249,115,22,0.1);
+  border: 1px solid rgba(249,115,22,0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+  margin-bottom: 28px;
+}
+.auth-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(249,115,22,0.3);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
+
+<!-- ============================================================
+     AUTH OVERLAY — aparece antes do app quando não logado
+     ============================================================ -->
+<div id="auth-overlay">
+
+  <!-- TELA DE LOGIN -->
+  <div id="auth-screen-login" class="auth-screen-view" style="width:100%;max-width:400px;display:flex;flex-direction:column;align-items:center;">
+    <div class="auth-logo">IRONCHECK</div>
+    <div class="auth-tagline">TREINE COM PROPÓSITO</div>
+    <div class="auth-card">
+      <div class="auth-title">Entrar</div>
+      <div id="login-error" class="auth-error"></div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Senha</label>
+        <input type="password" id="login-password" placeholder="Sua senha" autocomplete="current-password">
+      </div>
+      <button class="auth-btn" id="btn-login">ENTRAR</button>
+      <div class="auth-divider">ou</div>
+      <button class="auth-btn-secondary" id="btn-goto-register">Criar conta</button>
+    </div>
+  </div>
+
+  <!-- TELA DE CADASTRO -->
+  <div id="auth-screen-register" class="auth-screen-view" style="width:100%;max-width:400px;display:none;flex-direction:column;align-items:center;">
+    <div class="auth-logo">IRONCHECK</div>
+    <div class="auth-tagline">CRIE SUA CONTA</div>
+    <div class="auth-card">
+      <div class="auth-title">Cadastro</div>
+      <div id="register-error" class="auth-error"></div>
+      <div id="register-success" class="auth-success"></div>
+
+      <div class="auth-section-label">Acesso</div>
+      <div class="auth-field">
+        <label>Nome completo</label>
+        <input type="text" id="reg-name" placeholder="Seu nome" autocomplete="name">
+      </div>
+      <div class="auth-field">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="auth-field">
+        <label>Senha (mín. 6 caracteres)</label>
+        <input type="password" id="reg-password" placeholder="Crie uma senha" autocomplete="new-password">
+      </div>
+
+      <hr class="auth-section-divider">
+      <div class="auth-section-label">Seus dados</div>
+
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>Peso (kg)</label>
+          <input type="number" id="reg-weight" placeholder="80" min="30" max="300">
+        </div>
+        <div class="auth-field">
+          <label>Altura (cm)</label>
+          <input type="number" id="reg-height" placeholder="178" min="100" max="250">
+        </div>
+      </div>
+      <div class="auth-row">
+        <div class="auth-field">
+          <label>Idade</label>
+          <input type="number" id="reg-age" placeholder="25" min="10" max="99">
+        </div>
+        <div class="auth-field">
+          <label>Dias/semana</label>
+          <select id="reg-days">
+            <option value="">Selecione</option>
+            <option value="2">2 dias</option>
+            <option value="3">3 dias</option>
+            <option value="4">4 dias</option>
+            <option value="5">5 dias</option>
+            <option value="6">6 dias</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="auth-btn" id="btn-register">CRIAR CONTA</button>
+      <div class="auth-divider">ou</div>
+      <button class="auth-btn-secondary" id="btn-goto-login">Já tenho conta</button>
+    </div>
+  </div>
+
+  <!-- TELA DE PENDENTE -->
+  <div id="auth-screen-pending" class="auth-screen-view" style="width:100%;max-width:400px;display:none;flex-direction:column;align-items:center;">
+    <div class="auth-logo">IRONCHECK</div>
+    <div class="auth-tagline">TREINE COM PROPÓSITO</div>
+    <div class="auth-card" style="text-align:center;">
+      <div class="auth-pending-icon">⏳</div>
+      <div class="auth-pending-title">Conta em análise</div>
+      <div class="auth-pending-text">
+        Sua conta foi criada e está aguardando aprovação.<br>
+        Assim que for aprovado, você terá acesso completo ao app.
+      </div>
+      <div style="display:flex;justify-content:center;margin-bottom:28px;">
+        <div class="auth-pending-badge">
+          <div class="auth-spinner"></div>
+          AGUARDANDO APROVAÇÃO
+        </div>
+      </div>
+      <button class="auth-btn" id="btn-check-status">Verificar agora</button>
+      <button class="auth-btn-secondary" id="btn-logout-pending">Sair</button>
+    </div>
+  </div>
+
+</div>
+<!-- FIM AUTH OVERLAY -->
 
 <div id="app">
 
@@ -1356,7 +1664,7 @@ html, body {
     <div class="logo">Iron<span>Check</span></div>
     <div class="header-right">
       <div class="week-badge" id="header-week-badge">SEM 1</div>
-
+      <button id="btn-logout-app" onclick="authLogout()" title="Sair" style="background:none;border:none;cursor:pointer;padding:4px 6px;color:var(--text3);font-size:18px;line-height:1;display:none;">⏻</button>
     </div>
   </div>
 
@@ -1624,6 +1932,10 @@ html, body {
   <div class="modal-sheet" id="modal-content"></div>
 </div>
 
+<!-- Firebase compat — carregado antes do script principal -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 // ============================================================
 // STATE
@@ -3855,6 +4167,195 @@ function loadSavedTheme() {
     }
   }
 }
+
+// ============================================================
+// FIREBASE — Auth + Aprovação manual
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCggxwCqa9Drk5O0J3t4NiQH7aqiIKjMGo",
+  authDomain: "ironcheck-6ae0e.firebaseapp.com",
+  projectId: "ironcheck-6ae0e",
+  storageBucket: "ironcheck-6ae0e.firebasestorage.app",
+  messagingSenderId: "459891714556",
+  appId: "1:459891714556:web:b1b4b66ca9cd8aa602aa79"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// Persistência — mantém sessão mesmo fechando o app no iPhone
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
+// --- Navegação entre telas de auth ---
+function showAuthScreen(name) {
+  document.querySelectorAll('.auth-screen-view').forEach(el => el.style.display = 'none');
+  const el = document.getElementById('auth-screen-' + name);
+  if (el) el.style.display = 'flex';
+}
+
+function showAuthOverlay() {
+  document.getElementById('auth-overlay').classList.add('active');
+}
+
+function hideAuthOverlay() {
+  document.getElementById('auth-overlay').classList.remove('active');
+  document.getElementById('btn-logout-app').style.display = 'inline-block';
+}
+
+// --- Tradução de erros do Firebase ---
+function firebaseErrorMsg(code) {
+  const msgs = {
+    'auth/user-not-found':      'Email não encontrado.',
+    'auth/wrong-password':      'Senha incorreta.',
+    'auth/invalid-email':       'Email inválido.',
+    'auth/email-already-in-use':'Este email já está cadastrado.',
+    'auth/weak-password':       'Senha muito fraca. Use pelo menos 6 caracteres.',
+    'auth/too-many-requests':   'Muitas tentativas. Aguarde alguns minutos.',
+    'auth/network-request-failed': 'Sem conexão. Verifique sua internet.',
+    'auth/invalid-credential':  'Email ou senha incorretos.',
+  };
+  return msgs[code] || 'Erro inesperado. Tente novamente.';
+}
+
+// --- LOGIN ---
+document.getElementById('btn-login').addEventListener('click', async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('active');
+
+  if (!email || !password) {
+    errEl.textContent = 'Preencha email e senha.';
+    errEl.classList.add('active');
+    return;
+  }
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.textContent = 'ENTRANDO...';
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+    // onAuthStateChanged cuida do resto
+  } catch(e) {
+    errEl.textContent = firebaseErrorMsg(e.code);
+    errEl.classList.add('active');
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR';
+  }
+});
+
+// --- CADASTRO ---
+document.getElementById('btn-register').addEventListener('click', async () => {
+  const name     = document.getElementById('reg-name').value.trim();
+  const email    = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const weight   = document.getElementById('reg-weight').value;
+  const height   = document.getElementById('reg-height').value;
+  const age      = document.getElementById('reg-age').value;
+  const days     = document.getElementById('reg-days').value;
+  const errEl    = document.getElementById('register-error');
+  const sucEl    = document.getElementById('register-success');
+  errEl.classList.remove('active');
+  sucEl.classList.remove('active');
+
+  if (!name || !email || !password || !weight || !height || !age || !days) {
+    errEl.textContent = 'Preencha todos os campos.';
+    errEl.classList.add('active');
+    return;
+  }
+
+  const btn = document.getElementById('btn-register');
+  btn.disabled = true;
+  btn.textContent = 'CRIANDO CONTA...';
+
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+
+    // Salvar dados do usuário no Firestore com status "pending"
+    await db.collection('users').doc(uid).set({
+      name,
+      email,
+      weight: Number(weight),
+      height: Number(height),
+      age: Number(age),
+      daysPerWeek: Number(days),
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // onAuthStateChanged vai detectar e mostrar tela de pendente
+  } catch(e) {
+    errEl.textContent = firebaseErrorMsg(e.code);
+    errEl.classList.add('active');
+    btn.disabled = false;
+    btn.textContent = 'CRIAR CONTA';
+  }
+});
+
+// --- VERIFICAR STATUS (botão na tela de pendente) ---
+document.getElementById('btn-check-status').addEventListener('click', async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+  const btn = document.getElementById('btn-check-status');
+  btn.disabled = true;
+  btn.textContent = 'VERIFICANDO...';
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists && doc.data().status === 'approved') {
+      hideAuthOverlay();
+    } else {
+      btn.textContent = 'AINDA PENDENTE';
+      setTimeout(() => { btn.disabled = false; btn.textContent = 'Verificar agora'; }, 2500);
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Verificar agora';
+  }
+});
+
+// --- LOGOUT ---
+function authLogout() {
+  auth.signOut();
+}
+
+document.getElementById('btn-logout-pending').addEventListener('click', authLogout);
+
+// --- NAVEGAÇÃO entre login e cadastro ---
+document.getElementById('btn-goto-register').addEventListener('click', () => showAuthScreen('register'));
+document.getElementById('btn-goto-login').addEventListener('click', () => showAuthScreen('login'));
+
+// --- OBSERVER PRINCIPAL — controla tudo ---
+auth.onAuthStateChanged(async (user) => {
+  if (!user) {
+    // Não logado — mostrar tela de login
+    showAuthOverlay();
+    showAuthScreen('login');
+    document.getElementById('btn-logout-app').style.display = 'none';
+    // Resetar botões
+    const btnL = document.getElementById('btn-login');
+    btnL.disabled = false; btnL.textContent = 'ENTRAR';
+    const btnR = document.getElementById('btn-register');
+    btnR.disabled = false; btnR.textContent = 'CRIAR CONTA';
+    return;
+  }
+
+  // Logado — verificar status no Firestore
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists && doc.data().status === 'approved') {
+      hideAuthOverlay();
+    } else {
+      showAuthOverlay();
+      showAuthScreen('pending');
+    }
+  } catch(e) {
+    // Se falhar (sem internet), deixar entrar — app ainda funciona offline
+    hideAuthOverlay();
+  }
+});
 
 // ============================================================
 // INIT

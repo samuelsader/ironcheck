@@ -1660,6 +1660,23 @@ html, body {
   cursor: pointer;
   white-space: nowrap;
 }
+/* Emoji picker */
+.emoji-picker { display: none !important; }
+.emoji-picker.open {
+  display: flex !important;
+  flex-wrap: wrap;
+  position: absolute;
+  top: 40px;
+  left: 0;
+  z-index: 9999;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  gap: 4px;
+  width: 220px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.7);
+}
 </style>
 </head>
 <body>
@@ -3858,10 +3875,7 @@ function renderEditCardioTypes() {
               border-radius:8px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">
             ${t.emoji}
           </button>
-          <div class="emoji-picker" id="emoji-picker-${i}"
-            style="position:absolute;top:40px;left:0;z-index:50;
-              background:var(--bg2);border:1px solid var(--border);border-radius:8px;
-              padding:8px;flex-wrap:wrap;gap:4px;width:220px;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:none">
+          <div class="emoji-picker" id="emoji-picker-${i}">
             ${EMOJI_OPTIONS.map(e => `
               <div class="emoji-opt" data-idx="${i}" data-emoji="${e}"
                 style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
@@ -3887,10 +3901,11 @@ function renderEditCardioTypes() {
       e.stopPropagation();
       const idx = btn.dataset.idx;
       const picker = document.getElementById(`emoji-picker-${idx}`);
-      const isOpen = picker.style.display === 'flex';
-      // close all
-      list.querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
-      picker.style.display = isOpen ? 'none' : 'flex';
+      const isOpen = picker.classList.contains('open');
+      // Fechar todos
+      list.querySelectorAll('.emoji-picker').forEach(p => p.classList.remove('open'));
+      // Abrir este se estava fechado
+      if (!isOpen) picker.classList.add('open');
     });
   });
 
@@ -3929,10 +3944,7 @@ function renderEditCardioTypes() {
   if (!list._emojiListenerAttached) {
     list._emojiListenerAttached = true;
     document.addEventListener('click', () => {
-      if (document.getElementById('cardio-types-list')) {
-        document.getElementById('cardio-types-list')
-          .querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
-      }
+      document.querySelectorAll('.emoji-picker.open').forEach(p => p.classList.remove('open'));
     });
   }
 

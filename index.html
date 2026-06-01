@@ -4491,7 +4491,8 @@ document.getElementById('btn-register').addEventListener('click', async () => {
         days_per_week: days + 'x por semana',
         experience:   (experience || '0') + ' anos',
         goal,
-        level
+        level,
+        firebase_link: 'https://console.firebase.google.com/project/ironcheck-6ae0e/firestore/data/~2Fusers~2F' + uid
       });
     } catch(emailErr) {
       // Não bloquear cadastro se email falhar

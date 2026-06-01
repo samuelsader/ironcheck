@@ -3825,7 +3825,28 @@ function renderEditCardioTypes() {
   const list = document.getElementById('cardio-types-list');
   if (!list) return;
 
-  const EMOJI_OPTIONS = ['🚴','🏃','⚡','🏊','🚣','⛹️','🤸','🧘','🏋️','🥊','🤾','🚵','🧗','🤼','🏇'];
+  const EMOJI_OPTIONS = ['🚴','🏃','⚡','🏊','🚣','⛹️','🤸','🧘','🏋️','🥊','🤾','🚵','🧗','🤼','🏇','⚽','🏀','🎾','🏐','🏈','🎱','🏓','🏸','🥋','🤺','🏌️','🎿','🛹','🚀','🔥','🚶','🧗'];
+
+  const EMOJI_SUGGESTIONS = {
+    'futebol':'⚽','basquete':'🏀','basketball':'🏀','tênis':'🎾','tennis':'🎾',
+    'vôlei':'🏐','volei':'🏐','natação':'🏊','natacao':'🏊','nadar':'🏊',
+    'corrida':'🏃','correr':'🏃','run':'🏃','bike':'🚴','bicicleta':'🚴',
+    'ciclismo':'🚴','spinning':'🚴','remo':'🚣','boxe':'🥊','box':'🥊',
+    'muay':'🥊','yoga':'🧘','pilates':'🧘','alongamento':'🧘','escalada':'🧗',
+    'luta':'🤼','jiu':'🥋','judô':'🥋','skate':'🛹','esqui':'🎿','golf':'🏌️',
+    'handebol':'🤾','caminhada':'🚶','caminhar':'🚶','eliptico':'🏃',
+    'esteira':'🏃','pular':'🤸','corda':'🤸','funcional':'🔥','hiit':'🔥',
+    'crossfit':'🔥','ping':'🏓','pong':'🏓','badminton':'🏸','trilha':'🚵',
+    'mtb':'🚵','mountain':'🚵','futebol americano':'🏈','baseboll':'⚾',
+  };
+
+  function suggestEmoji(label) {
+    const lower = label.toLowerCase();
+    for (const [key, emoji] of Object.entries(EMOJI_SUGGESTIONS)) {
+      if (lower.includes(key)) return emoji;
+    }
+    return null;
+  }
 
   list.innerHTML = types.map((t, i) => `
     <div class="edit-workout-item" style="padding:0" data-ctidx="${i}">
@@ -3838,9 +3859,9 @@ function renderEditCardioTypes() {
             ${t.emoji}
           </button>
           <div class="emoji-picker" id="emoji-picker-${i}"
-            style="display:none;position:absolute;top:40px;left:0;z-index:50;
+            style="position:absolute;top:40px;left:0;z-index:50;
               background:var(--bg2);border:1px solid var(--border);border-radius:8px;
-              padding:8px;display:none;flex-wrap:wrap;gap:4px;width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.5)">
+              padding:8px;flex-wrap:wrap;gap:4px;width:220px;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:none">
             ${EMOJI_OPTIONS.map(e => `
               <div class="emoji-opt" data-idx="${i}" data-emoji="${e}"
                 style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
@@ -3885,10 +3906,35 @@ function renderEditCardioTypes() {
     });
   });
 
-  // Close pickers on outside click
-  document.addEventListener('click', () => {
-    list.querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
-  }, { once: true });
+  // Sugestão automática de emoji ao digitar o nome
+  list.querySelectorAll('.cardio-type-label-input').forEach(input => {
+    input.addEventListener('blur', () => {
+      const idx = parseInt(input.dataset.idx);
+      const label = input.value.trim();
+      if (!label || !state.cardioTypes[idx]) return;
+      const currentEmoji = state.cardioTypes[idx].emoji;
+      if (currentEmoji === '⚡' || !currentEmoji) {
+        const suggested = suggestEmoji(label);
+        if (suggested) {
+          state.cardioTypes[idx].emoji = suggested;
+          state.cardioTypes[idx].label = label;
+          saveState();
+          renderEditCardioTypes();
+        }
+      }
+    });
+  });
+
+  // Fechar picker ao clicar fora — listener permanente (sem once:true)
+  if (!list._emojiListenerAttached) {
+    list._emojiListenerAttached = true;
+    document.addEventListener('click', () => {
+      if (document.getElementById('cardio-types-list')) {
+        document.getElementById('cardio-types-list')
+          .querySelectorAll('.emoji-picker').forEach(p => p.style.display = 'none');
+      }
+    });
+  }
 
   // Delete type
   list.querySelectorAll('.delete-cardio-type-btn').forEach(btn => {

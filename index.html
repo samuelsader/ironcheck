@@ -1577,6 +1577,89 @@ html, body {
   transition: color 0.2s;
 }
 .auth-btn-link:active { color: var(--accent); }
+/* ============================================================
+   TUTORIAL DE BOAS-VINDAS
+   ============================================================ */
+#tutorial-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 88888;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 80px;
+}
+#tutorial-overlay.active { display: flex; }
+.tutorial-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px 24px 24px;
+  width: calc(100% - 32px);
+  max-width: 400px;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.tutorial-step-indicator {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.tutorial-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s, width 0.2s;
+}
+.tutorial-dot.active {
+  background: var(--accent);
+  width: 18px;
+  border-radius: 3px;
+}
+.tutorial-emoji { font-size: 36px; margin-bottom: 12px; text-align: center; }
+.tutorial-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 10px;
+  letter-spacing: 0.5px;
+}
+.tutorial-text {
+  font-size: 14px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.tutorial-actions { display: flex; gap: 10px; }
+.tutorial-btn-next {
+  flex: 1;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.tutorial-btn-skip {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 16px;
+  color: var(--text3);
+  font-family: 'Barlow', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -1726,6 +1809,14 @@ html, body {
         </select>
       </div>
 
+      <hr class="auth-section-divider">
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:16px;">
+        <input type="checkbox" id="reg-terms" style="margin-top:3px;accent-color:var(--accent);flex-shrink:0;width:16px;height:16px;">
+        <span style="font-size:12px;color:var(--text2);line-height:1.5;">
+          Autorizo o IronCheck a armazenar e utilizar os dados informados neste cadastro (nome, email, dados físicos e de treino) para fins de personalização do app e comunicação. Estou ciente de que esses dados não serão compartilhados com terceiros.
+        </span>
+      </label>
+
       <button class="auth-btn" id="btn-register">CRIAR CONTA</button>
       <div class="auth-divider">ou</div>
       <button class="auth-btn-secondary" id="btn-goto-login">Já tenho conta</button>
@@ -1756,6 +1847,22 @@ html, body {
 
 </div>
 <!-- FIM AUTH OVERLAY -->
+
+<!-- ============================================================
+     TUTORIAL DE BOAS-VINDAS
+     ============================================================ -->
+<div id="tutorial-overlay">
+  <div class="tutorial-card">
+    <div class="tutorial-step-indicator" id="tutorial-dots"></div>
+    <div class="tutorial-emoji" id="tutorial-emoji"></div>
+    <div class="tutorial-title" id="tutorial-title"></div>
+    <div class="tutorial-text" id="tutorial-text"></div>
+    <div class="tutorial-actions">
+      <button class="tutorial-btn-skip" id="tutorial-skip">Pular</button>
+      <button class="tutorial-btn-next" id="tutorial-next">Próximo →</button>
+    </div>
+  </div>
+</div>
 
 <div id="app">
 
@@ -3934,7 +4041,14 @@ document.getElementById('add-workout-btn').addEventListener('click', () => {
 document.getElementById('add-cardio-type-btn').addEventListener('click', () => {
   saveCardioTypeEdits();
   if (!state.cardioTypes) state.cardioTypes = [...DEFAULT_DATA.cardioTypes];
-  state.cardioTypes.push({ id: `cardio_${Date.now()}`, label: 'Novo Tipo', emoji: '⚡' });
+  // Inserir antes do "Outro" (sempre mantém Outro por último)
+  const outroIdx = state.cardioTypes.findIndex(t => t.id === 'outro');
+  const newType = { id: `cardio_${Date.now()}`, label: 'Novo Tipo', emoji: '⚡' };
+  if (outroIdx !== -1) {
+    state.cardioTypes.splice(outroIdx, 0, newType);
+  } else {
+    state.cardioTypes.push(newType);
+  }
   saveState();
   renderEditCardioTypes();
 });
@@ -4324,6 +4438,10 @@ function showAuthOverlay() {
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').classList.remove('active');
   document.getElementById('btn-logout-app').style.display = 'inline-block';
+  // Mostrar tutorial se for a primeira vez
+  if (!Storage.get('ironcheck_tutorial_done')) {
+    setTimeout(startTutorial, 400);
+  }
 }
 
 // --- Tradução de erros Firebase ---
@@ -4443,6 +4561,11 @@ document.getElementById('btn-register').addEventListener('click', async () => {
     errEl.classList.add('active');
     return;
   }
+  if (!document.getElementById('reg-terms').checked) {
+    errEl.textContent = 'Você precisa aceitar os termos para criar uma conta.';
+    errEl.classList.add('active');
+    return;
+  }
   if (password.length < 6) {
     errEl.textContent = 'Senha deve ter pelo menos 6 caracteres.';
     errEl.classList.add('active');
@@ -4474,6 +4597,7 @@ document.getElementById('btn-register').addEventListener('click', async () => {
       goal,
       level,
       status:     'pending',
+      termsAcceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdAt:  firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -4580,6 +4704,84 @@ auth.onAuthStateChanged(async (user) => {
     hideAuthOverlay();
   }
 });
+
+// ============================================================
+// TUTORIAL DE BOAS-VINDAS
+// ============================================================
+const TUTORIAL_STEPS = [
+  {
+    emoji: '💪',
+    title: 'Bem-vindo ao IronCheck!',
+    text: 'O IronCheck foi criado para você ter controle total da sua evolução na academia. Registre treinos, acompanhe peso e séries, e veja seu progresso semana a semana.'
+  },
+  {
+    emoji: '🏠',
+    title: 'Aba Home',
+    text: 'Aqui você vê um resumo da semana — o próximo treino, progresso semanal e atividade recente. É o seu painel principal.'
+  },
+  {
+    emoji: '🏋️',
+    title: 'Aba Treino',
+    text: 'Selecione o treino do dia, registre os pesos e repetições de cada exercício. O histórico das semanas anteriores fica sempre visível para comparação.'
+  },
+  {
+    emoji: '🏃',
+    title: 'Aba Cardio',
+    text: 'Registre seus treinos de cardio por dia da semana. Você pode personalizar os tipos de cardio na aba Editar.'
+  },
+  {
+    emoji: '📊',
+    title: 'Aba Dashboard',
+    text: 'Acompanhe gráficos de evolução de carga por exercício e volume de cardio ao longo das semanas.'
+  },
+  {
+    emoji: '✏️',
+    title: 'Aba Editar',
+    text: 'Configure seus treinos, adicione ou remova exercícios, e personalize os tipos de cardio. Comece por aqui para montar sua grade de treinos!'
+  }
+];
+
+let tutorialStep = 0;
+
+function startTutorial() {
+  tutorialStep = 0;
+  renderTutorialStep();
+  document.getElementById('tutorial-overlay').classList.add('active');
+}
+
+function renderTutorialStep() {
+  const step = TUTORIAL_STEPS[tutorialStep];
+  const total = TUTORIAL_STEPS.length;
+
+  document.getElementById('tutorial-emoji').textContent = step.emoji;
+  document.getElementById('tutorial-title').textContent = step.title;
+  document.getElementById('tutorial-text').textContent  = step.text;
+
+  // Dots
+  const dots = document.getElementById('tutorial-dots');
+  dots.innerHTML = TUTORIAL_STEPS.map((_, i) =>
+    `<div class="tutorial-dot ${i === tutorialStep ? 'active' : ''}"></div>`
+  ).join('');
+
+  const nextBtn = document.getElementById('tutorial-next');
+  nextBtn.textContent = tutorialStep === total - 1 ? 'Começar! 🚀' : 'Próximo →';
+}
+
+function closeTutorial() {
+  document.getElementById('tutorial-overlay').classList.remove('active');
+  Storage.set('ironcheck_tutorial_done', '1');
+}
+
+document.getElementById('tutorial-next').addEventListener('click', () => {
+  if (tutorialStep < TUTORIAL_STEPS.length - 1) {
+    tutorialStep++;
+    renderTutorialStep();
+  } else {
+    closeTutorial();
+  }
+});
+
+document.getElementById('tutorial-skip').addEventListener('click', closeTutorial);
 
 // ============================================================
 // INIT

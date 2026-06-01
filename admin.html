@@ -258,9 +258,15 @@ function switchTab(tab) {
 
 // --- Carregar usuários em tempo real ---
 function loadUsers() {
-  db.collection('users').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+  db.collection('users').onSnapshot(snapshot => {
     const users = [];
     snapshot.forEach(doc => users.push({ uid: doc.id, ...doc.data() }));
+    // Ordenar no cliente: mais recentes primeiro (sem índice necessário)
+    users.sort((a, b) => {
+      const ta = a.createdAt?.toDate?.() || new Date(0);
+      const tb = b.createdAt?.toDate?.() || new Date(0);
+      return tb - ta;
+    });
 
     const pending  = users.filter(u => u.status === 'pending');
     const approved = users.filter(u => u.status === 'approved');

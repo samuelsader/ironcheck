@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IronCheck — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a; --bg2: #111; --bg3: #1a1a1a; --bg4: #222;
+  --border: #2a2a2a; --accent: #f97316;
+  --text: #f0f0f0; --text2: #a0a0a0; --text3: #606060;
+  --green: #22c55e; --red: #ef4444; --yellow: #eab308;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; min-height: 100vh; }
+
+/* LOGIN */
+#login-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 24px;
+}
+.logo { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: 1px; margin-bottom: 4px; }
+.logo span { color: var(--text); }
+.subtitle { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; }
+.login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 360px; }
+.login-card h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+.field input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 11px 14px; font-size: 15px; color: var(--text); font-family: 'Barlow', sans-serif; outline: none; transition: border-color 0.2s; }
+.field input:focus { border-color: var(--accent); }
+.btn-primary { width: 100%; background: var(--accent); color: white; border: none; border-radius: 10px; padding: 14px; font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; margin-top: 6px; }
+.btn-primary:active { opacity: 0.8; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.error-msg { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 14px; color: var(--red); font-size: 13px; margin-bottom: 14px; display: none; }
+.error-msg.active { display: block; }
+
+/* ADMIN PANEL */
+#admin-screen { display: none; padding: 0 0 40px; }
+.admin-header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+.admin-header-left { display: flex; align-items: center; gap: 12px; }
+.admin-logo { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 800; color: var(--accent); letter-spacing: 1px; }
+.admin-badge { background: rgba(249,115,22,0.15); border: 1px solid rgba(249,115,22,0.3); border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1px; }
+.btn-logout { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--text2); font-family: 'Barlow', sans-serif; font-size: 13px; cursor: pointer; }
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+.admin-content { max-width: 900px; margin: 0 auto; padding: 24px 20px; }
+
+/* TABS */
+.tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+.tab-btn { flex: 1; padding: 9px; border: none; border-radius: 7px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; background: none; color: var(--text3); transition: all 0.2s; }
+.tab-btn.active { background: var(--bg4); color: var(--text); }
+
+/* STATS */
+.stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-number { font-family: 'Barlow Condensed', sans-serif; font-size: 32px; font-weight: 800; color: var(--accent); }
+.stat-label { font-size: 11px; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-top: 2px; }
+
+/* USER LIST */
+.section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; color: var(--text2); text-transform: uppercase; margin-bottom: 12px; }
+.user-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 10px; }
+.user-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.user-name { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; }
+.user-email { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; }
+.status-pending  { background: rgba(234,179,8,0.15);  border: 1px solid rgba(234,179,8,0.3);  color: var(--yellow); }
+.status-approved { background: rgba(34,197,94,0.15);  border: 1px solid rgba(34,197,94,0.3);  color: var(--green); }
+.status-rejected { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.3);  color: var(--red); }
+.user-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 16px; margin-bottom: 14px; }
+.user-detail { font-size: 12px; color: var(--text3); }
+.user-detail span { color: var(--text2); font-weight: 500; }
+.user-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-approve { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: var(--green); border-radius: 8px; padding: 9px 18px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s; }
+.btn-approve:hover { background: rgba(34,197,94,0.25); }
+.btn-reject { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--red); border-radius: 8px; padding: 9px 18px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: all 0.2s; }
+.btn-reject:hover { background: rgba(239,68,68,0.2); }
+.btn-revoke { background: none; border: 1px solid var(--border); color: var(--text3); border-radius: 8px; padding: 9px 18px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; }
+
+/* STATUS DROPDOWN */
+.status-select { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 9px 14px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); cursor: pointer; outline: none; }
+.status-select:focus { border-color: var(--accent); }
+
+.empty-state { text-align: center; padding: 48px 20px; color: var(--text3); font-size: 14px; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+.loading { text-align: center; padding: 48px; color: var(--text3); }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--bg4); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 500; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; }
+.toast.success { border-color: rgba(34,197,94,0.4); color: var(--green); }
+.toast.error   { border-color: rgba(239,68,68,0.4);  color: var(--red); }
+
+.date-small { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+@media (max-width: 480px) {
+  .stats-row { grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .stat-number { font-size: 24px; }
+  .user-details { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="logo">IRON<span>CHECK</span></div>
+  <div class="subtitle">Painel de administração</div>
+  <div class="login-card">
+    <h2>Entrar como admin</h2>
+    <div id="login-error" class="error-msg"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="admin-email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <input type="password" id="admin-password" placeholder="Sua senha" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="btn-admin-login">ENTRAR</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-screen">
+  <div class="admin-header">
+    <div class="admin-header-left">
+      <div class="admin-logo">IRONCHECK</div>
+      <div class="admin-badge">ADMIN</div>
+    </div>
+    <button class="btn-logout" id="btn-admin-logout">Sair</button>
+  </div>
+
+  <div class="admin-content">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-number" id="stat-pending">—</div>
+        <div class="stat-label">Pendentes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-approved">—</div>
+        <div class="stat-label">Aprovados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="stat-total">—</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="pending" onclick="switchTab('pending')">⏳ Pendentes</button>
+      <button class="tab-btn" data-tab="approved" onclick="switchTab('approved')">✅ Aprovados</button>
+      <button class="tab-btn" data-tab="all" onclick="switchTab('all')">👥 Todos</button>
+    </div>
+
+    <!-- Lists -->
+    <div id="tab-pending">
+      <div class="section-title">Aguardando aprovação</div>
+      <div id="list-pending"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+    <div id="tab-approved" style="display:none">
+      <div class="section-title">Usuários aprovados</div>
+      <div id="list-approved"></div>
+    </div>
+    <div id="tab-all" style="display:none">
+      <div class="section-title">Todos os usuários</div>
+      <div id="list-all"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCggxwCqa9Drk5O0J3t4NiQH7aqiIKjMGo",
+  authDomain: "ironcheck-6ae0e.firebaseapp.com",
+  projectId: "ironcheck-6ae0e",
+  storageBucket: "ironcheck-6ae0e.firebasestorage.app",
+  messagingSenderId: "459891714556",
+  appId: "1:459891714556:web:b1b4b66ca9cd8aa602aa79"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// UID do admin — só este email tem acesso
+const ADMIN_EMAIL = 'samuelsader11@gmail.com';
+
+// --- Toast ---
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// --- Login ---
+document.getElementById('btn-admin-login').addEventListener('click', async () => {
+  const email    = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  const errEl    = document.getElementById('login-error');
+  errEl.classList.remove('active');
+
+  const btn = document.getElementById('btn-admin-login');
+  btn.disabled = true; btn.textContent = 'ENTRANDO...';
+
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, password);
+    if (cred.user.email !== ADMIN_EMAIL) {
+      await auth.signOut();
+      errEl.textContent = 'Acesso negado. Conta sem permissão de admin.';
+      errEl.classList.add('active');
+      btn.disabled = false; btn.textContent = 'ENTRAR';
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/wrong-password':     'Senha incorreta.',
+      'auth/user-not-found':     'Email não encontrado.',
+      'auth/invalid-credential': 'Email ou senha incorretos.',
+    };
+    errEl.textContent = msgs[e.code] || 'Erro ao entrar.';
+    errEl.classList.add('active');
+    btn.disabled = false; btn.textContent = 'ENTRAR';
+  }
+});
+
+document.getElementById('btn-admin-logout').addEventListener('click', () => auth.signOut());
+
+// --- Auth observer ---
+auth.onAuthStateChanged(user => {
+  if (user && user.email === ADMIN_EMAIL) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    loadUsers();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('admin-screen').style.display = 'none';
+  }
+});
+
+// --- Tabs ---
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  ['pending','approved','all'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// --- Carregar usuários em tempo real ---
+function loadUsers() {
+  db.collection('users').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    const users = [];
+    snapshot.forEach(doc => users.push({ uid: doc.id, ...doc.data() }));
+
+    const pending  = users.filter(u => u.status === 'pending');
+    const approved = users.filter(u => u.status === 'approved');
+    const rejected = users.filter(u => u.status === 'rejected');
+
+    document.getElementById('stat-pending').textContent  = pending.length;
+    document.getElementById('stat-approved').textContent = approved.length;
+    document.getElementById('stat-total').textContent    = users.length;
+
+    renderList('list-pending',  pending,  'Nenhum cadastro pendente 🎉');
+    renderList('list-approved', approved, 'Nenhum usuário aprovado ainda.');
+    renderList('list-all',      users,    'Nenhum usuário cadastrado.');
+  });
+}
+
+// --- Renderizar lista ---
+function renderList(containerId, users, emptyMsg) {
+  const container = document.getElementById(containerId);
+  if (users.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>${emptyMsg}</div>`;
+    return;
+  }
+  container.innerHTML = users.map(u => userCard(u)).join('');
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function goalLabel(g) {
+  const map = { hipertrofia:'Hipertrofia', emagrecimento:'Emagrecimento', forca:'Força', condicionamento:'Condicionamento', saude:'Saúde' };
+  return map[g] || g || '—';
+}
+function levelLabel(l) {
+  const map = { iniciante:'Iniciante', intermediario:'Intermediário', avancado:'Avançado' };
+  return map[l] || l || '—';
+}
+function genderLabel(g) {
+  return g === 'M' ? 'Masculino' : g === 'F' ? 'Feminino' : g || '—';
+}
+
+function userCard(u) {
+  const statusClass = { pending:'status-pending', approved:'status-approved', rejected:'status-rejected' }[u.status] || 'status-pending';
+  const statusText  = { pending:'⏳ Pendente', approved:'✅ Aprovado', rejected:'❌ Rejeitado' }[u.status] || u.status;
+
+  return `
+  <div class="user-card" id="card-${u.uid}">
+    <div class="user-card-header">
+      <div>
+        <div class="user-name">${u.name || '—'}</div>
+        <div class="user-email">${u.email || '—'}</div>
+        <div class="date-small">Cadastro: ${formatDate(u.createdAt)}</div>
+      </div>
+      <div class="status-badge ${statusClass}">${statusText}</div>
+    </div>
+    <div class="user-details">
+      <div class="user-detail">Peso: <span>${u.weight ? u.weight + ' kg' : '—'}</span></div>
+      <div class="user-detail">Altura: <span>${u.height ? u.height + ' cm' : '—'}</span></div>
+      <div class="user-detail">Idade: <span>${u.age ? u.age + ' anos' : '—'}</span></div>
+      <div class="user-detail">Sexo: <span>${genderLabel(u.gender)}</span></div>
+      <div class="user-detail">Dias/semana: <span>${u.daysPerWeek ? u.daysPerWeek + 'x' : '—'}</span></div>
+      <div class="user-detail">Experiência: <span>${u.experience !== undefined ? u.experience + ' anos' : '—'}</span></div>
+      <div class="user-detail">Objetivo: <span>${goalLabel(u.goal)}</span></div>
+      <div class="user-detail">Nível: <span>${levelLabel(u.level)}</span></div>
+    </div>
+    <div class="user-actions">
+      <select class="status-select" onchange="updateStatus('${u.uid}', this.value, this)">
+        <option value="pending"  ${u.status === 'pending'  ? 'selected' : ''}>⏳ Pendente</option>
+        <option value="approved" ${u.status === 'approved' ? 'selected' : ''}>✅ Aprovado</option>
+        <option value="rejected" ${u.status === 'rejected' ? 'selected' : ''}>❌ Rejeitado</option>
+      </select>
+    </div>
+  </div>`;
+}
+
+// --- Atualizar status via dropdown ---
+async function updateStatus(uid, newStatus, selectEl) {
+  selectEl.disabled = true;
+  try {
+    await db.collection('users').doc(uid).update({ status: newStatus });
+    const labels = { approved: '✅ Aprovado!', pending: '⏳ Marcado como pendente', rejected: '❌ Rejeitado' };
+    showToast(labels[newStatus] || 'Status atualizado');
+  } catch(e) {
+    showToast('Erro ao atualizar', 'error');
+  } finally {
+    selectEl.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

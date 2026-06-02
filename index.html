@@ -3987,11 +3987,12 @@ function renderEditCardioTypes() {
           </button>
           <div class="emoji-picker" id="emoji-picker-${i}">
             ${EMOJI_OPTIONS.map(e => `
-              <div class="emoji-opt" data-idx="${i}" data-emoji="${e}"
+              <button type="button" class="emoji-opt" data-idx="${i}" data-emoji="${e}"
                 style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;
-                  font-size:18px;cursor:pointer;border-radius:6px;background:var(--bg3)">
+                  font-size:18px;cursor:pointer;border-radius:6px;background:var(--bg3);
+                  border:none;padding:0;-webkit-tap-highlight-color:transparent">
                 ${e}
-              </div>`).join('')}
+              </button>`).join('')}
           </div>
         </div>
         <!-- Label input -->
@@ -4509,7 +4510,7 @@ function renderThemeSwatches() {
   const bgWrap = document.getElementById('bg-swatches');
   if (bgWrap) {
     bgWrap.innerHTML = BG_THEMES.map(t => {
-      const isActive = (state.bgTheme || 'Preto') === t.name;
+      const isActive = (state.bgTheme || 'Claro') === t.name;
       return `<div title="${t.name}" data-bg-theme="${t.name}"
         style="width:34px;height:34px;border-radius:50%;cursor:pointer;
           background:linear-gradient(135deg, ${t.bg} 50%, ${t.bg3} 50%);
@@ -4537,6 +4538,7 @@ function loadSavedTheme() {
       root.style.setProperty('--accent-glow',t.glow);
     }
   }
+  if (!state.bgTheme) state.bgTheme = 'Claro';
   if (state.bgTheme) {
     const t = BG_THEMES.find(t => t.name === state.bgTheme);
     if (t) {

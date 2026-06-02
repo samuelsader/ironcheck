@@ -2039,7 +2039,61 @@ html, body {
     <!-- SETTINGS SCREEN -->
     <div class="screen" id="settings-screen">
 
-      <!-- Planejamento -->
+      <!-- ① TREINO -->
+      <div class="settings-section">
+        <div class="settings-section-title">Treino</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
+
+          <!-- Modo de Registro -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Modo de Registro</div>
+            <div style="display:flex;gap:8px">
+              <button id="mode-btn-complete" onclick="setAppMode('complete')" style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">💪 Completo</button>
+              <button id="mode-btn-simple" onclick="setAppMode('simple')" style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">⚡ Simples</button>
+            </div>
+            <div id="mode-desc" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--bg4);border-radius:6px"></div>
+          </div>
+
+          <!-- Aquecimento -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sugestão de Aquecimento</div>
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="range" id="warmup-pct-slider" min="20" max="80" step="5" style="flex:1;accent-color:var(--accent)" oninput="updateWarmupPct(this.value)">
+              <div style="min-width:48px;text-align:right">
+                <span id="warmup-pct-val" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">50</span><span style="font-size:12px;color:var(--text3)">%</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Chip de aquecimento exibido no card de cada exercício com registro anterior.</div>
+          </div>
+
+          <!-- Dias dos treinos -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Dias dos Treinos</div>
+            <div id="day-config-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ② CARDIO -->
+      <div class="settings-section">
+        <div class="settings-section-title">Cardio</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Meta semanal (minutos)</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="number" id="cardio-goal-input" inputmode="numeric" min="0" max="9999"
+                style="width:90px;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent);background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:6px 10px;text-align:center"
+                oninput="onCardioGoalInput(this.value)"
+                placeholder="0">
+              <span style="font-size:13px;color:var(--text3)">min / semana</span>
+            </div>
+          </div>
+          <div id="cardio-goal-daily" style="font-size:13px;color:var(--text2);padding:8px 10px;background:var(--bg4);border-radius:8px;min-height:34px;display:flex;align-items:center"></div>
+        </div>
+      </div>
+
+      <!-- ③ PLANEJAMENTO -->
       <div class="settings-section">
         <div class="settings-section-title">Planejamento</div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
@@ -2063,9 +2117,9 @@ html, body {
         </div>
       </div>
 
-      <!-- Semana manual (fallback when no plan date) -->
+      <!-- Semana manual (só aparece quando sem data de início) -->
       <div class="settings-section" id="manual-week-section">
-        <div class="settings-section-title">Semana Atual (Manual)</div>
+        <div class="settings-section-title">Semana Atual</div>
         <div class="current-week-control">
           <div class="week-ctrl-label">Semana de Treino</div>
           <div class="week-ctrl-btns">
@@ -2076,12 +2130,22 @@ html, body {
         </div>
       </div>
 
-      <!-- Days config -->
+      <!-- ④ VISUAL -->
       <div class="settings-section">
-        <div class="settings-section-title">Dias dos Treinos</div>
-        <div id="day-config-list" style="display:flex;flex-direction:column;gap:6px"></div>
+        <div class="settings-section-title">Visual</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Cor de Destaque</div>
+            <div id="theme-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Fundo do App</div>
+            <div id="bg-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+          </div>
+        </div>
       </div>
 
+      <!-- ⑤ DADOS -->
       <div class="settings-section">
         <div class="settings-section-title">Dados</div>
         <button class="settings-btn" id="export-btn">
@@ -2111,126 +2175,8 @@ html, body {
         </button>
       </div>
 
+      <!-- ⑥ SOBRE -->
       <div class="settings-section">
-        <div class="settings-section-title">Tema de Cores</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Cor de Destaque</div>
-            <div id="theme-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-          </div>
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Fundo do App</div>
-            <div id="bg-swatches" style="display:flex;flex-wrap:wrap;gap:10px"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Preferências de treino -->
-      <div class="settings-section">
-        <div class="settings-section-title">Preferências de Treino</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
-
-          <!-- Modo do App -->
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Modo de Registro</div>
-            <div style="display:flex;gap:8px">
-              <button id="mode-btn-complete" onclick="setAppMode('complete')"
-                style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">
-                💪 Completo
-              </button>
-              <button id="mode-btn-simple" onclick="setAppMode('simple')"
-                style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">
-                ⚡ Simples
-              </button>
-            </div>
-            <div id="mode-desc" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--bg4);border-radius:6px"></div>
-          </div>
-
-          <!-- Sugestão de Aquecimento -->
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sugestão de Aquecimento</div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <input type="range" id="warmup-pct-slider" min="20" max="80" step="5"
-                style="flex:1;accent-color:var(--accent)"
-                oninput="updateWarmupPct(this.value)">
-              <div style="min-width:52px;text-align:center">
-                <span id="warmup-pct-val" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">50</span>
-                <span style="font-size:12px;color:var(--text3)">%</span>
-              </div>
-            </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">
-              Peso sugerido para aquecimento antes de cada exercício. Aparece como chip no card do exercício.
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Meta de Cardio -->
-      <div class="settings-section">
-        <div class="settings-section-title">Meta Semanal de Cardio</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Minutos por semana</div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <button class="week-ctrl-btn" onclick="adjustCardioGoal(-30)">−</button>
-              <div style="flex:1;text-align:center">
-                <span id="cardio-goal-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">0</span>
-                <span style="font-size:13px;color:var(--text3)"> min</span>
-              </div>
-              <button class="week-ctrl-btn" onclick="adjustCardioGoal(30)">+</button>
-            </div>
-          </div>
-          <div id="cardio-goal-daily" style="font-size:13px;color:var(--text2);text-align:center;padding:8px;background:var(--bg4);border-radius:8px;min-height:36px;display:flex;align-items:center;justify-content:center"></div>
-        </div>
-      </div>
-
-      <!-- Preferências de treino -->
-      <div class="settings-section">
-        <div class="settings-section-title">Preferências de Treino</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Modo de Registro</div>
-            <div style="display:flex;gap:8px">
-              <button id="mode-btn-complete" onclick="setAppMode('complete')" style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">💪 Completo</button>
-              <button id="mode-btn-simple" onclick="setAppMode('simple')" style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">⚡ Simples</button>
-            </div>
-            <div id="mode-desc" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--bg4);border-radius:6px"></div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sugestão de Aquecimento</div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <input type="range" id="warmup-pct-slider" min="20" max="80" step="5" style="flex:1;accent-color:var(--accent)" oninput="updateWarmupPct(this.value)">
-              <div style="min-width:52px;text-align:center">
-                <span id="warmup-pct-val" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">50</span>
-                <span style="font-size:12px;color:var(--text3)">%</span>
-              </div>
-            </div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px">Peso sugerido para aquecimento. Aparece como chip laranja no card do exercício.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Meta de Cardio -->
-      <div class="settings-section">
-        <div class="settings-section-title">Meta Semanal de Cardio</div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Minutos por semana</div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <button class="week-ctrl-btn" onclick="adjustCardioGoal(-30)">−</button>
-              <div style="flex:1;text-align:center">
-                <span id="cardio-goal-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">0</span>
-                <span style="font-size:13px;color:var(--text3)"> min</span>
-              </div>
-              <button class="week-ctrl-btn" onclick="adjustCardioGoal(30)">+</button>
-            </div>
-          </div>
-          <div id="cardio-goal-daily" style="font-size:13px;color:var(--text2);text-align:center;padding:8px;background:var(--bg4);border-radius:8px;min-height:36px;display:flex;align-items:center;justify-content:center"></div>
-        </div>
-      </div>
-
-            <div class="settings-section">
         <div class="settings-section-title">Sobre</div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
           <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.1</strong><br>
@@ -2622,8 +2568,36 @@ document.getElementById('training-done-btn').addEventListener('click', () => {
   const doneBtn = document.getElementById('training-done-btn');
   doneBtn.textContent = isDone ? '✅' : '✓';
   doneBtn.style.color = isDone ? 'var(--green)' : '';
+  // Sincronizar botão inline
+  const inlineBtn = document.getElementById('inline-done-btn');
+  if (inlineBtn) {
+    inlineBtn.textContent = isDone ? '✅ Treino Concluído' : '✓ Concluir Treino';
+    inlineBtn.style.borderColor = isDone ? 'var(--green)' : 'var(--accent)';
+    inlineBtn.style.background = isDone ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.08)';
+    inlineBtn.style.color = isDone ? 'var(--green)' : 'var(--accent)';
+  }
   showToast(isDone ? 'Treino concluído! 🔥' : 'Marcação removida');
 });
+
+function toggleInlineDone() {
+  if (!activeWorkoutId) return;
+  const key = `${activeWorkoutId}_w${activeWeek}`;
+  state.weeklyDone[key] = !state.weeklyDone[key];
+  saveState();
+  const isDone = state.weeklyDone[key];
+  // Sincronizar botão do header
+  const doneBtn = document.getElementById('training-done-btn');
+  if (doneBtn) { doneBtn.textContent = isDone ? '✅' : '✓'; doneBtn.style.color = isDone ? 'var(--green)' : ''; }
+  // Atualizar inline
+  const inlineBtn = document.getElementById('inline-done-btn');
+  if (inlineBtn) {
+    inlineBtn.textContent = isDone ? '✅ Treino Concluído' : '✓ Concluir Treino';
+    inlineBtn.style.borderColor = isDone ? 'var(--green)' : 'var(--accent)';
+    inlineBtn.style.background = isDone ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.08)';
+    inlineBtn.style.color = isDone ? 'var(--green)' : 'var(--accent)';
+  }
+  showToast(isDone ? 'Treino concluído! 🔥' : 'Marcação removida');
+}
 
 // ============================================================
 // HOME SCREEN
@@ -2957,6 +2931,8 @@ function renderExercises() {
   if (!workout) return;
   const list = document.getElementById('exercises-list');
 
+  const _isDoneAlready = state.weeklyDone[`${activeWorkoutId}_w${activeWeek}`];
+
   list.innerHTML = workout.exercises.map((ex, idx) => {
     const log = getLog(activeWorkoutId, ex.id, activeWeek);
     const hasCurrent = log.reps || log.weight || (log.seriesWeights && log.seriesWeights.some(v=>v));
@@ -2993,31 +2969,49 @@ function renderExercises() {
     // ---- MODO SIMPLES ----
     if (state.appMode === 'simple') {
       const simpleLog = getLog(activeWorkoutId, ex.id, activeWeek);
-      const simpleHasCurrent = simpleLog.weight || simpleLog.notes;
+      const simpleHasCurrent = !!(simpleLog.weight || simpleLog.notes);
+      // Peso inicial: semana atual se já salvo, senão último registro anterior
+      const simpleInitWeight = simpleLog.weight || (lastLog ? (lastLog.weight || '') : '');
+      // Badge de peso salvo no header
+      const savedBadge = simpleLog.weight
+        ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--accent)">${simpleLog.weight}<span style="font-size:11px;font-weight:600;color:var(--text3)"> kg</span></span>`
+        : (lastLog && lastLog.weight ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--text3)">${lastLog.weight}<span style="font-size:11px;font-weight:600;color:var(--text3)"> kg</span></span>` : `<span style="font-size:11px;color:var(--text3)">—</span>`);
+
       return `
         <div class="exercise-card" data-exid="${ex.id}" data-mode="simple">
           <div class="exercise-header">
             <div class="exercise-num">${idx + 1}</div>
-            <div class="exercise-name-wrap">
+            <div class="exercise-name-wrap" style="flex:1">
               <div class="exercise-name">${ex.name}</div>
-              <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${lastLabel}${warmupChip}</div>
+              <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">${lastLabel}${warmupChip}</div>
             </div>
-            <div class="exercise-status ${simpleHasCurrent ? 'filled' : ''}"></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${savedBadge}
+              <div class="exercise-status ${simpleHasCurrent ? 'filled' : ''}"></div>
+            </div>
           </div>
           <div class="exercise-body" id="body_${ex.id}">
-            <div class="input-row">
-              <div class="input-group" style="flex:1">
-                <div class="input-label">Peso utilizado (kg)</div>
-                <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${simpleLog.weight || ''}" placeholder="ex: 40">
+            <!-- Peso em destaque com ajuste rápido -->
+            <div style="display:flex;align-items:center;justify-content:center;gap:0;margin:4px 0 8px">
+              <button onclick="simpleAdjust('${ex.id}', -2.5)"
+                style="width:44px;height:52px;background:var(--bg4);border:1px solid var(--border);border-right:none;border-radius:10px 0 0 10px;font-size:20px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0">−</button>
+              <div style="position:relative;flex:1;max-width:140px">
+                <input type="text" inputmode="decimal" id="weight_${ex.id}"
+                  value="${simpleInitWeight}"
+                  placeholder="0"
+                  style="width:100%;height:52px;background:var(--bg4);border:1px solid var(--border);border-left:none;border-right:none;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent);text-align:center;box-sizing:border-box">
+                <span style="position:absolute;right:8px;bottom:7px;font-size:11px;font-weight:700;color:var(--text3);pointer-events:none">kg</span>
               </div>
+              <button onclick="simpleAdjust('${ex.id}', 2.5)"
+                style="width:44px;height:52px;background:var(--bg4);border:1px solid var(--border);border-left:none;border-radius:0 10px 10px 0;font-size:20px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0">+</button>
             </div>
-            <div class="input-row">
-              <div class="input-group" style="flex:1">
-                <div class="input-label">Observações (opcional)</div>
-                <input type="text" class="gym-input" id="notes_${ex.id}" value="${simpleLog.notes || ''}" placeholder="ex: senti bem, aumentar na próxima">
-              </div>
-            </div>
-            <button class="save-exercise-btn" data-exid="${ex.id}" data-mode="simple">Salvar</button>
+            <!-- Obs discreta -->
+            <input type="text" class="gym-input" id="notes_${ex.id}"
+              value="${simpleLog.notes || ''}"
+              placeholder="Observação (opcional)"
+              style="width:100%;margin-bottom:8px;font-size:13px;color:var(--text2);box-sizing:border-box">
+            <button class="save-exercise-btn" data-exid="${ex.id}" data-mode="simple"
+              style="width:100%">Salvar</button>
           </div>
         </div>
       `;
@@ -3075,6 +3069,18 @@ function renderExercises() {
       </div>
     `;
   }).join('');
+
+  // Botão concluir treino no fim da lista
+  list.innerHTML += `
+    <button id="inline-done-btn"
+      onclick="toggleInlineDone()"
+      style="width:100%;margin-top:8px;padding:14px;border-radius:var(--radius);border:2px solid ${_isDoneAlready ? 'var(--green)' : 'var(--accent)'};
+        background:${_isDoneAlready ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.08)'};
+        color:${_isDoneAlready ? 'var(--green)' : 'var(--accent)'};
+        font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;
+        text-transform:uppercase;cursor:pointer;transition:all 0.2s">
+      ${_isDoneAlready ? '✅ Treino Concluído' : '✓ Concluir Treino'}
+    </button>`;
 
   // Toggle expand
   list.querySelectorAll('.exercise-header').forEach(header => {
@@ -4893,6 +4899,17 @@ auth.onAuthStateChanged(async (user) => {
 // TUTORIAL DE BOAS-VINDAS
 // ============================================================
 // ============================================================
+// MODO SIMPLES — ajuste rápido de peso
+// ============================================================
+function simpleAdjust(exId, delta) {
+  const input = document.getElementById('weight_' + exId);
+  if (!input) return;
+  const cur = parseFloat(input.value) || 0;
+  const next = Math.max(0, Math.round((cur + delta) * 2) / 2); // arredonda pra 0.5
+  input.value = next > 0 ? next : '';
+}
+
+// ============================================================
 // APP MODE
 // ============================================================
 function setAppMode(mode) {
@@ -4929,9 +4946,9 @@ function updateSettingsUI() {
     valEl.textContent = state.warmupPct || 50;
   }
 
-  // Cardio goal
-  const goalEl = document.getElementById('cardio-goal-val');
-  if (goalEl) goalEl.textContent = state.cardioWeeklyGoal || 0;
+  // Cardio goal — novo input numérico
+  const goalInput = document.getElementById('cardio-goal-input');
+  if (goalInput) goalInput.value = state.cardioWeeklyGoal || 0;
   updateCardioGoalDaily();
 }
 
@@ -4942,10 +4959,9 @@ function updateWarmupPct(val) {
   saveState();
 }
 
-function adjustCardioGoal(delta) {
-  state.cardioWeeklyGoal = Math.max(0, (state.cardioWeeklyGoal || 0) + delta);
-  const goalEl = document.getElementById('cardio-goal-val');
-  if (goalEl) goalEl.textContent = state.cardioWeeklyGoal;
+function onCardioGoalInput(val) {
+  const num = Math.max(0, parseInt(val) || 0);
+  state.cardioWeeklyGoal = num;
   updateCardioGoalDaily();
   saveState();
 }
@@ -4955,12 +4971,11 @@ function updateCardioGoalDaily() {
   if (!el) return;
   const goal = state.cardioWeeklyGoal || 0;
   if (goal === 0) {
-    el.textContent = 'Nenhuma meta definida.';
-    el.style.color = 'var(--text3)';
+    el.innerHTML = '<span style="color:var(--text3)">Nenhuma meta definida.</span>';
     return;
   }
   const perDay = Math.round(goal / 7);
-  el.innerHTML = `<span style="color:var(--accent);font-weight:700">${perDay} min/dia</span>&nbsp;<span style="color:var(--text3)">para atingir sua meta semanal</span>`;
+  el.innerHTML = `<span style="color:var(--accent);font-weight:700;font-family:'Barlow Condensed',sans-serif;font-size:16px">${perDay} min/dia</span><span style="color:var(--text3);margin-left:4px">para atingir sua meta</span>`;
 }
 
 // Hint no cadastro

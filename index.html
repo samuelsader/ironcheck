@@ -1770,8 +1770,8 @@ html, body {
       </div>
       <div class="auth-row">
         <div class="auth-field">
-          <label>Idade</label>
-          <input type="number" id="reg-age" placeholder="25" min="10" max="99">
+          <label>Data de nascimento</label>
+          <input type="date" id="reg-birthdate" style="width:100%;font-size:15px">
         </div>
         <div class="auth-field">
           <label>Sexo</label>
@@ -1823,6 +1823,27 @@ html, body {
           <option value="iniciante">Iniciante (menos de 1 ano)</option>
           <option value="intermediario">Intermediário (1–3 anos)</option>
           <option value="avancado">Avançado (3+ anos)</option>
+        </select>
+      </div>
+
+      <hr class="auth-section-divider">
+      <div class="auth-section-label">Modo de uso</div>
+
+      <div class="auth-field">
+        <label>Como você prefere registrar seus treinos?</label>
+        <select id="reg-appmode" onchange="updateAppModeHint()">
+          <option value="complete">Modo Completo — séries, reps e pesos detalhados</option>
+          <option value="simple">Modo Simples — só o exercício e o peso usado</option>
+        </select>
+        <div id="appmode-hint" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--bg4);border-radius:6px;display:none"></div>
+      </div>
+
+      <div class="auth-field">
+        <label>Seu foco principal</label>
+        <select id="reg-focus">
+          <option value="academia">Academia / Musculação</option>
+          <option value="cardio">Cardio / Esportes</option>
+          <option value="ambos">Ambos</option>
         </select>
       </div>
 
@@ -2104,10 +2125,115 @@ html, body {
         </div>
       </div>
 
+      <!-- Preferências de treino -->
       <div class="settings-section">
+        <div class="settings-section-title">Preferências de Treino</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
+
+          <!-- Modo do App -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Modo de Registro</div>
+            <div style="display:flex;gap:8px">
+              <button id="mode-btn-complete" onclick="setAppMode('complete')"
+                style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">
+                💪 Completo
+              </button>
+              <button id="mode-btn-simple" onclick="setAppMode('simple')"
+                style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">
+                ⚡ Simples
+              </button>
+            </div>
+            <div id="mode-desc" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--bg4);border-radius:6px"></div>
+          </div>
+
+          <!-- Sugestão de Aquecimento -->
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sugestão de Aquecimento</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="warmup-pct-slider" min="20" max="80" step="5"
+                style="flex:1;accent-color:var(--accent)"
+                oninput="updateWarmupPct(this.value)">
+              <div style="min-width:52px;text-align:center">
+                <span id="warmup-pct-val" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">50</span>
+                <span style="font-size:12px;color:var(--text3)">%</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">
+              Peso sugerido para aquecimento antes de cada exercício. Aparece como chip no card do exercício.
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Meta de Cardio -->
+      <div class="settings-section">
+        <div class="settings-section-title">Meta Semanal de Cardio</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Minutos por semana</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="week-ctrl-btn" onclick="adjustCardioGoal(-30)">−</button>
+              <div style="flex:1;text-align:center">
+                <span id="cardio-goal-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">0</span>
+                <span style="font-size:13px;color:var(--text3)"> min</span>
+              </div>
+              <button class="week-ctrl-btn" onclick="adjustCardioGoal(30)">+</button>
+            </div>
+          </div>
+          <div id="cardio-goal-daily" style="font-size:13px;color:var(--text2);text-align:center;padding:8px;background:var(--bg4);border-radius:8px;min-height:36px;display:flex;align-items:center;justify-content:center"></div>
+        </div>
+      </div>
+
+      <!-- Preferências de treino -->
+      <div class="settings-section">
+        <div class="settings-section-title">Preferências de Treino</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:16px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Modo de Registro</div>
+            <div style="display:flex;gap:8px">
+              <button id="mode-btn-complete" onclick="setAppMode('complete')" style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">💪 Completo</button>
+              <button id="mode-btn-simple" onclick="setAppMode('simple')" style="flex:1;padding:10px 8px;border-radius:8px;border:2px solid;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s">⚡ Simples</button>
+            </div>
+            <div id="mode-desc" style="font-size:11px;color:var(--text3);margin-top:6px;line-height:1.5;padding:8px 10px;background:var(--bg4);border-radius:6px"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Sugestão de Aquecimento</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="range" id="warmup-pct-slider" min="20" max="80" step="5" style="flex:1;accent-color:var(--accent)" oninput="updateWarmupPct(this.value)">
+              <div style="min-width:52px;text-align:center">
+                <span id="warmup-pct-val" style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">50</span>
+                <span style="font-size:12px;color:var(--text3)">%</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px">Peso sugerido para aquecimento. Aparece como chip laranja no card do exercício.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Meta de Cardio -->
+      <div class="settings-section">
+        <div class="settings-section-title">Meta Semanal de Cardio</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Minutos por semana</div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="week-ctrl-btn" onclick="adjustCardioGoal(-30)">−</button>
+              <div style="flex:1;text-align:center">
+                <span id="cardio-goal-val" style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent)">0</span>
+                <span style="font-size:13px;color:var(--text3)"> min</span>
+              </div>
+              <button class="week-ctrl-btn" onclick="adjustCardioGoal(30)">+</button>
+            </div>
+          </div>
+          <div id="cardio-goal-daily" style="font-size:13px;color:var(--text2);text-align:center;padding:8px;background:var(--bg4);border-radius:8px;min-height:36px;display:flex;align-items:center;justify-content:center"></div>
+        </div>
+      </div>
+
+            <div class="settings-section">
         <div class="settings-section-title">Sobre</div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.0</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.1</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos localmente no navegador.
         </div>
@@ -2168,104 +2294,22 @@ html, body {
 // ============================================================
 const DEFAULT_DATA = {
   currentWeek: 1,
-  planStartDate: null,   // ISO date string e.g. "2026-05-01"
-  totalWeeks: 12,        // total planned weeks
+  planStartDate: null,
+  totalWeeks: 12,
   weeklyDone: {},
-  workouts: [
-    {
-      id: 'w1',
-      name: 'Pernas — Quadríceps',
-      day: 'Segunda',
-      exercises: [
-        { id: 'e1_1', name: 'Extensora' },
-        { id: 'e1_2', name: 'Avanço' },
-        { id: 'e1_3', name: 'Leg Press' },
-        { id: 'e1_4', name: 'Adutora' },
-        { id: 'e1_5', name: 'Panturrilha Maq.' }
-      ]
-    },
-    {
-      id: 'w2',
-      name: 'Push',
-      day: 'Terça',
-      exercises: [
-        { id: 'e2_1', name: 'Supino Declinado c/ Halt.' },
-        { id: 'e2_2', name: 'Elevação Lateral' },
-        { id: 'e2_3', name: 'Supino Reto Maq.' },
-        { id: 'e2_4', name: 'Fly Maq.' },
-        { id: 'e2_5', name: 'Elevação Lateral (extra)' },
-        { id: 'e2_6', name: 'Elevação Frontal' },
-        { id: 'e2_7', name: 'Tríceps Barra Polia' }
-      ]
-    },
-    {
-      id: 'w3',
-      name: 'Pull',
-      day: 'Quarta',
-      exercises: [
-        { id: 'e3_1', name: 'Puxada Unilateral' },
-        { id: 'e3_2', name: 'Remada Pronada Upper Back' },
-        { id: 'e3_3', name: 'Puxada Aberta' },
-        { id: 'e3_4', name: 'Remada Baixa Supinada Unilat.' },
-        { id: 'e3_5', name: 'Scott Unilat.' },
-        { id: 'e3_6', name: 'Martelo c/ Halt.' }
-      ]
-    },
-    {
-      id: 'w4',
-      name: 'Posterior e Glúteos',
-      day: 'Quinta',
-      exercises: [
-        { id: 'e4_1', name: 'Agachamento Livre' },
-        { id: 'e4_2', name: 'Mesa Flexora / Unilat.' },
-        { id: 'e4_3', name: 'Búlgaro' },
-        { id: 'e4_4', name: 'Stiff' },
-        { id: 'e4_5', name: 'Panturrilha Maq.' }
-      ]
-    },
-    {
-      id: 'w5',
-      name: 'Peito e Costas',
-      day: 'Sexta',
-      exercises: [
-        { id: 'e5_1', name: 'Supino Inclinado Smith' },
-        { id: 'e5_2', name: 'Remada Baixa Inclinada' },
-        { id: 'e5_3', name: 'Fly Maq.' },
-        { id: 'e5_4', name: 'Remada Articulada' },
-        { id: 'e5_5', name: 'Supino Reto Maq.' },
-        { id: 'e5_6', name: 'Barra Fixa' }
-      ]
-    },
-    {
-      id: 'w6',
-      name: 'Ombros e Braços',
-      day: 'Sábado',
-      exercises: [
-        { id: 'e6_1', name: 'Desenvolvimento Ombros' },
-        { id: 'e6_2', name: 'Fly Invertido Maq.' },
-        { id: 'e6_3', name: 'Elevação Lateral Maq.' },
-        { id: 'e6_4', name: 'Tríceps Testa Polia' },
-        { id: 'e6_5', name: 'Rosca 45° Polia' },
-        { id: 'e6_6', name: 'Tríceps Carter' },
-        { id: 'e6_7', name: 'Francês c/ Halt.' },
-        { id: 'e6_8', name: 'Panturrilha Polia (2s rápidas)' }
-      ]
-    }
-  ],
-  // logs[workoutId][exerciseId][week] = { reps: '', weight: '', seriesWeights: null }
+  workouts: [],
   logs: {},
-  // seriesConfig[exerciseId] = number of series (default 1)
   seriesConfig: {},
-  // cardio[week][day] = { done: bool, type: string (id), minutes: '' }
   cardio: {},
-  // cardioTypes: array of { id, label, emoji }
   cardioTypes: [
     { id: 'bike',    label: 'Bike',    emoji: '🚴' },
     { id: 'esteira', label: 'Esteira', emoji: '🏃' },
     { id: 'outro',   label: 'Outro',   emoji: '⚡' }
-  ]
+  ],
+  appMode: 'complete',
+  cardioWeeklyGoal: 0,
+  warmupPct: 50
 };
-
 let state = {};
 
 // Safe storage wrapper — handles iOS file:// restrictions silently
@@ -2309,12 +2353,15 @@ function loadState() {
     const stored = Storage.get('ironcheck_v1');
     if (stored) {
       state = JSON.parse(stored);
-      if (!state.workouts) state.workouts = DEFAULT_DATA.workouts;
+      if (!state.workouts) state.workouts = [];
       if (!state.logs) state.logs = {};
       if (!state.weeklyDone) state.weeklyDone = {};
       if (!state.currentWeek) state.currentWeek = 1;
       if (!state.cardioTypes || state.cardioTypes.length === 0) state.cardioTypes = DEFAULT_DATA.cardioTypes;
       if (!state.seriesConfig) state.seriesConfig = {};
+      if (!state.appMode) state.appMode = 'complete';
+      if (state.cardioWeeklyGoal === undefined) state.cardioWeeklyGoal = 0;
+      if (state.warmupPct === undefined) state.warmupPct = 50;
     } else {
       state = JSON.parse(JSON.stringify(DEFAULT_DATA));
     }
@@ -2930,27 +2977,69 @@ function renderExercises() {
       ? `Sem ${lastLogWeek}: ${getWeightDisplay(lastLog)} · ${lastLog.reps || '—'}`
       : 'Sem registro anterior';
 
+    // Warmup suggestion
+    const lastWeightNum = lastLog ? parseFloat(lastLog.weight || (lastLog.seriesWeights && lastLog.seriesWeights.find(v => parseFloat(v) > 0))) : NaN;
+    const warmupPct = state.warmupPct || 50;
+    const warmupWeight = (!isNaN(lastWeightNum) && lastWeightNum > 0)
+      ? Math.round(lastWeightNum * warmupPct / 100 * 2) / 2  // arredonda pro 0.5 mais próximo
+      : null;
+    const warmupChip = warmupWeight !== null
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(249,115,22,0.12);color:var(--accent);border:1px solid rgba(249,115,22,0.3);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🔥 Aquec. ${warmupWeight}kg</span>`
+      : '';
+
     // Series expand state — stored per-exercise in DOM via id
     const seriesExpanded = usingSeries; // if already using series, show expanded by default
 
+    // ---- MODO SIMPLES ----
+    if (state.appMode === 'simple') {
+      const simpleLog = getLog(activeWorkoutId, ex.id, activeWeek);
+      const simpleHasCurrent = simpleLog.weight || simpleLog.notes;
+      return `
+        <div class="exercise-card" data-exid="${ex.id}" data-mode="simple">
+          <div class="exercise-header">
+            <div class="exercise-num">${idx + 1}</div>
+            <div class="exercise-name-wrap">
+              <div class="exercise-name">${ex.name}</div>
+              <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${lastLabel}${warmupChip}</div>
+            </div>
+            <div class="exercise-status ${simpleHasCurrent ? 'filled' : ''}"></div>
+          </div>
+          <div class="exercise-body" id="body_${ex.id}">
+            <div class="input-row">
+              <div class="input-group" style="flex:1">
+                <div class="input-label">Peso utilizado (kg)</div>
+                <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${simpleLog.weight || ''}" placeholder="ex: 40">
+              </div>
+            </div>
+            <div class="input-row">
+              <div class="input-group" style="flex:1">
+                <div class="input-label">Observações (opcional)</div>
+                <input type="text" class="gym-input" id="notes_${ex.id}" value="${simpleLog.notes || ''}" placeholder="ex: senti bem, aumentar na próxima">
+              </div>
+            </div>
+            <button class="save-exercise-btn" data-exid="${ex.id}" data-mode="simple">Salvar</button>
+          </div>
+        </div>
+      `;
+    }
+    // ---- MODO COMPLETO ----
     return `
       <div class="exercise-card" data-exid="${ex.id}">
         <div class="exercise-header">
           <div class="exercise-num">${idx + 1}</div>
           <div class="exercise-name-wrap">
             <div class="exercise-name">${ex.name}</div>
-            <div class="exercise-last">${lastLabel}</div>
+            <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${lastLabel}${warmupChip}</div>
           </div>
           <div class="exercise-status ${hasCurrent ? 'filled' : ''}"></div>
         </div>
         <div class="exercise-body" id="body_${ex.id}">
           <!-- Weight row: single field + "Pesos diferentes" button -->
           <div style="display:flex;align-items:flex-end;gap:8px">
-            ${!usingSeries ? `
-              <div class="input-group" style="flex:1">
-                <div class="input-label">Peso (kg)</div>
-                <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${log.weight || ''}" placeholder="ex: 40">
-              </div>` : ''}
+            <div class="input-group" style="flex:1;display:${usingSeries ? 'none' : ''}">
+              <div class="input-label">Peso (kg)</div>
+              <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${log.weight || ''}" placeholder="ex: 40">
+            </div>
             <button class="series-toggle-btn ${usingSeries ? 'active' : ''}" data-exid="${ex.id}"
               style="flex-shrink:0;${!usingSeries ? '' : 'width:100%;'}">
               ${usingSeries ? '✕ Peso único' : '⊞ Pesos diferentes'}
@@ -3017,7 +3106,7 @@ function renderExercises() {
         btn.classList.remove('active');
         btn.style.width = '';
         // Show single weight input
-        if (weightInput) weightInput.closest('.input-group').parentElement.style.display = '';
+        if (weightInput) weightInput.closest('.input-group').style.display = '';
       } else {
         // Switch to series
         const cur = getSeriesCount(exId);
@@ -3027,7 +3116,7 @@ function renderExercises() {
         btn.classList.add('active');
         btn.style.width = '100%';
         // Hide single weight input row
-        if (weightInput) weightInput.closest('.input-group').parentElement.style.display = 'none';
+        if (weightInput) weightInput.closest('.input-group').style.display = 'none';
         // Re-render series inputs with correct count
         const seriesCount = getSeriesCount(exId);
         const log = getLog(activeWorkoutId, exId, activeWeek);
@@ -3062,6 +3151,23 @@ function renderExercises() {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const exId = btn.dataset.exid;
+      const isSimple = btn.dataset.mode === 'simple';
+
+      if (!state.logs[activeWorkoutId]) state.logs[activeWorkoutId] = {};
+      if (!state.logs[activeWorkoutId][exId]) state.logs[activeWorkoutId][exId] = {};
+
+      if (isSimple) {
+        const weight = document.getElementById(`weight_${exId}`)?.value.trim() || '';
+        const notes  = document.getElementById(`notes_${exId}`)?.value.trim() || '';
+        state.logs[activeWorkoutId][exId][`w${activeWeek}`] = { weight, notes, reps: '', seriesWeights: null };
+        saveState();
+        const card = btn.closest('.exercise-card');
+        card.querySelector('.exercise-status').classList.toggle('filled', !!(weight || notes));
+        showToast('Salvo! 💪');
+        card.querySelector('.exercise-body').classList.remove('open');
+        return;
+      }
+
       const reps = document.getElementById(`reps_${exId}`)?.value.trim() || '';
       const seriesCount = getSeriesCount(exId);
       let weight = '';
@@ -3078,8 +3184,6 @@ function renderExercises() {
         weight = document.getElementById(`weight_${exId}`)?.value.trim() || '';
       }
 
-      if (!state.logs[activeWorkoutId]) state.logs[activeWorkoutId] = {};
-      if (!state.logs[activeWorkoutId][exId]) state.logs[activeWorkoutId][exId] = {};
       state.logs[activeWorkoutId][exId][`w${activeWeek}`] = { reps, weight, seriesWeights };
       saveState();
 
@@ -4140,6 +4244,7 @@ function computeCurrentWeekFromPlan() {
 }
 
 function renderSettings() {
+  updateSettingsUI();
   // Auto-compute week if plan date is set — only overwrite if no logs exist
   if (state.planStartDate) {
     const _hasLogs = state.logs && Object.keys(state.logs).some(wid =>
@@ -4519,13 +4624,12 @@ function firebaseErrorMsg(code) {
 
 // --- Gerar treinos em branco baseados nos dias da semana ---
 function generateBlankWorkouts(daysPerWeek) {
-  const labels = ['A','B','C','D','E','F'];
-  const days   = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const days = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const workouts = [];
   for (let i = 0; i < daysPerWeek; i++) {
     workouts.push({
       id: 'workout_' + (i + 1),
-      name: 'Treino ' + labels[i],
+      name: 'Ficha ' + (i + 1),
       day: days[i],
       exercises: []
     });
@@ -4602,19 +4706,30 @@ document.getElementById('btn-register').addEventListener('click', async () => {
   const password   = document.getElementById('reg-password').value;
   const weight     = document.getElementById('reg-weight').value;
   const height     = document.getElementById('reg-height').value;
-  const age        = document.getElementById('reg-age').value;
+  const birthdate  = document.getElementById('reg-birthdate').value;
   const gender     = document.getElementById('reg-gender').value;
   const days       = document.getElementById('reg-days').value;
   const experience = document.getElementById('reg-experience').value;
   const goal       = document.getElementById('reg-goal').value;
   const level      = document.getElementById('reg-level').value;
+  const appMode    = document.getElementById('reg-appmode').value;
+  const focus      = document.getElementById('reg-focus').value;
   const errEl      = document.getElementById('register-error');
   const sucEl      = document.getElementById('register-success');
   errEl.classList.remove('active');
   sucEl.classList.remove('active');
 
+  // Calcular idade a partir da data de nascimento
+  let age = '';
+  if (birthdate) {
+    const bd = new Date(birthdate);
+    const today = new Date();
+    age = today.getFullYear() - bd.getFullYear() -
+      (today < new Date(today.getFullYear(), bd.getMonth(), bd.getDate()) ? 1 : 0);
+  }
+
   // Validação
-  if (!name || !email || !password || !weight || !height || !age || !gender || !days || !goal || !level) {
+  if (!name || !email || !password || !weight || !height || !birthdate || !gender || !days || !goal || !level) {
     errEl.textContent = 'Preencha todos os campos obrigatórios.';
     errEl.classList.add('active');
     return;
@@ -4648,12 +4763,15 @@ document.getElementById('btn-register').addEventListener('click', async () => {
       email,
       weight:     Number(weight),
       height:     Number(height),
+      birthdate,
       age:        Number(age),
       gender,
       daysPerWeek: Number(days),
       experience:  experience ? Number(experience) : 0,
       goal,
       level,
+      appMode,
+      focus,
       status:     'pending',
       termsAcceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
       createdAt:  firebase.firestore.FieldValue.serverTimestamp()
@@ -4674,13 +4792,19 @@ document.getElementById('btn-register').addEventListener('click', async () => {
         experience:   (experience || '0') + ' anos',
         goal,
         level,
-        firebase_link: 'https://console.firebase.google.com/project/ironcheck-6ae0e/firestore/data/~2Fusers~2F' + uid
+        firebase_link: 'https://console.firebase.google.com/project/ironcheck-6ae0e/firestore/data/~2Fusers~2F' + uid,
+        app_mode:     appMode,
+        focus
       });
     } catch(emailErr) {
       // Não bloquear cadastro se email falhar
       console.warn('EmailJS falhou:', emailErr);
     }
 
+    // Aplicar appMode ao state local imediatamente
+    state.appMode = appMode;
+    state.focus   = focus;
+    saveState();
     // onAuthStateChanged vai detectar e mostrar tela de pendente
   } catch(e) {
     errEl.textContent = firebaseErrorMsg(e.code);
@@ -4740,14 +4864,16 @@ auth.onAuthStateChanged(async (user) => {
     if (doc.exists && doc.data().status === 'approved') {
       // Aplicar treinos em branco baseados nos dias cadastrados
       const data = doc.data();
-      if (data.daysPerWeek && (!state.workouts || state.workouts.length === 0 ||
-          state.workouts.every(w => w.exercises && w.exercises.length === 0 &&
-          w.id && w.id.startsWith('workout_')))) {
-        // Só substituir se o usuário ainda não tem treinos personalizados
-        const hasCustomWorkouts = state.workouts && state.workouts.some(w =>
-          w.exercises && w.exercises.length > 0
-        );
-        if (!hasCustomWorkouts) {
+      // Aplicar dados do Firebase ao state
+      if (data.appMode && !state.appMode) state.appMode = data.appMode;
+      if (data.appMode) state.appMode = data.appMode;
+
+      // Gerar treinos se não existem ou se são exatamente os gerados automaticamente (sem customização)
+      if (data.daysPerWeek) {
+        const hasCustomWorkouts = state.workouts && state.workouts.length > 0 &&
+          state.workouts.some(w => w.exercises && w.exercises.length > 0);
+        const hasCorrectCount = state.workouts && state.workouts.length === data.daysPerWeek;
+        if (!hasCustomWorkouts && !hasCorrectCount) {
           state.workouts = generateBlankWorkouts(data.daysPerWeek);
           saveState();
         }
@@ -4766,11 +4892,104 @@ auth.onAuthStateChanged(async (user) => {
 // ============================================================
 // TUTORIAL DE BOAS-VINDAS
 // ============================================================
+// ============================================================
+// APP MODE
+// ============================================================
+function setAppMode(mode) {
+  state.appMode = mode;
+  saveState();
+  updateSettingsUI();
+  renderExercises(); // re-render se estiver na tela de treino
+}
+
+function updateSettingsUI() {
+  const mode = state.appMode || 'complete';
+  const btnC = document.getElementById('mode-btn-complete');
+  const btnS = document.getElementById('mode-btn-simple');
+  const desc = document.getElementById('mode-desc');
+  if (btnC && btnS && desc) {
+    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f97316';
+    const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#333';
+    btnC.style.background = mode === 'complete' ? 'rgba(249,115,22,0.15)' : 'var(--bg4)';
+    btnC.style.borderColor = mode === 'complete' ? 'var(--accent)' : 'var(--border)';
+    btnC.style.color = mode === 'complete' ? 'var(--accent)' : 'var(--text2)';
+    btnS.style.background = mode === 'simple' ? 'rgba(249,115,22,0.15)' : 'var(--bg4)';
+    btnS.style.borderColor = mode === 'simple' ? 'var(--accent)' : 'var(--border)';
+    btnS.style.color = mode === 'simple' ? 'var(--accent)' : 'var(--text2)';
+    desc.textContent = mode === 'complete'
+      ? 'Registro detalhado: séries, repetições e variações de peso por série. Ideal para quem quer controle total da evolução.'
+      : 'Registro simplificado: só o peso usado e uma observação opcional. Ideal para quem quer agilidade no registro.';
+  }
+
+  // Warmup slider
+  const slider = document.getElementById('warmup-pct-slider');
+  const valEl  = document.getElementById('warmup-pct-val');
+  if (slider && valEl) {
+    slider.value = state.warmupPct || 50;
+    valEl.textContent = state.warmupPct || 50;
+  }
+
+  // Cardio goal
+  const goalEl = document.getElementById('cardio-goal-val');
+  if (goalEl) goalEl.textContent = state.cardioWeeklyGoal || 0;
+  updateCardioGoalDaily();
+}
+
+function updateWarmupPct(val) {
+  state.warmupPct = Number(val);
+  const valEl = document.getElementById('warmup-pct-val');
+  if (valEl) valEl.textContent = val;
+  saveState();
+}
+
+function adjustCardioGoal(delta) {
+  state.cardioWeeklyGoal = Math.max(0, (state.cardioWeeklyGoal || 0) + delta);
+  const goalEl = document.getElementById('cardio-goal-val');
+  if (goalEl) goalEl.textContent = state.cardioWeeklyGoal;
+  updateCardioGoalDaily();
+  saveState();
+}
+
+function updateCardioGoalDaily() {
+  const el = document.getElementById('cardio-goal-daily');
+  if (!el) return;
+  const goal = state.cardioWeeklyGoal || 0;
+  if (goal === 0) {
+    el.textContent = 'Nenhuma meta definida.';
+    el.style.color = 'var(--text3)';
+    return;
+  }
+  const perDay = Math.round(goal / 7);
+  el.innerHTML = `<span style="color:var(--accent);font-weight:700">${perDay} min/dia</span>&nbsp;<span style="color:var(--text3)">para atingir sua meta semanal</span>`;
+}
+
+// Hint no cadastro
+function updateAppModeHint() {
+  const sel = document.getElementById('reg-appmode');
+  const hint = document.getElementById('appmode-hint');
+  if (!sel || !hint) return;
+  const val = sel.value;
+  if (val === 'simple') {
+    hint.textContent = 'No Modo Simples, você registra apenas o peso utilizado e uma observação opcional — sem séries ou repetições. Ideal para quem quer registrar rápido.';
+    hint.style.display = 'block';
+  } else if (val === 'complete') {
+    hint.textContent = 'No Modo Completo, você registra séries, repetições e variações de peso por série. Ideal para controle total da evolução.';
+    hint.style.display = 'block';
+  } else {
+    hint.style.display = 'none';
+  }
+}
+
 const TUTORIAL_STEPS = [
   {
     emoji: '💪',
     title: 'Bem-vindo ao IronCheck!',
-    text: 'O IronCheck foi criado para você ter controle total da sua evolução na academia. Registre treinos, acompanhe peso e séries, e veja seu progresso semana a semana.'
+    text: 'O IronCheck foi criado para você ter controle total da sua evolução. Registre treinos, acompanhe peso e séries, e veja seu progresso semana a semana.'
+  },
+  {
+    emoji: '⚡',
+    title: 'Modo Simples ou Completo?',
+    text: 'No Modo Completo você registra séries, reps e variações de peso. No Modo Simples, só o peso usado e uma observação — para registrar mais rápido. Você pode trocar a qualquer momento em Configurações.'
   },
   {
     emoji: '🏠',

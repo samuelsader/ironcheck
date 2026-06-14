@@ -195,6 +195,17 @@ const db   = firebase.firestore();
 // UID do admin — só este email tem acesso
 const ADMIN_EMAIL = 'samuelsader11@gmail.com';
 
+// --- Escape de strings vindas do Firestore (dados controlados pelo usuário) ---
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // --- Toast ---
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
@@ -315,31 +326,32 @@ function userCard(u) {
   const statusText  = { pending:'⏳ Pendente', approved:'✅ Aprovado', rejected:'❌ Rejeitado' }[u.status] || u.status;
 
   return `
-  <div class="user-card" id="card-${u.uid}">
+  <div class="user-card" id="card-${esc(u.uid)}">
     <div class="user-card-header">
       <div>
-        <div class="user-name">${u.name || '—'}</div>
-        <div class="user-email">${u.email || '—'}</div>
+        <div class="user-name">${esc(u.name) || '—'}</div>
+        <div class="user-email">${esc(u.email) || '—'}</div>
         <div class="date-small">Cadastro: ${formatDate(u.createdAt)}</div>
       </div>
-      <div class="status-badge ${statusClass}">${statusText}</div>
+      <div class="status-badge ${statusClass}">${esc(statusText)}</div>
     </div>
     <div class="user-details">
-      <div class="user-detail">Peso: <span>${u.weight ? u.weight + ' kg' : '—'}</span></div>
-      <div class="user-detail">Altura: <span>${u.height ? u.height + ' cm' : '—'}</span></div>
-      <div class="user-detail">Idade: <span>${u.age ? u.age + ' anos' : '—'}</span></div>
-      <div class="user-detail">Sexo: <span>${genderLabel(u.gender)}</span></div>
-      <div class="user-detail">Dias/semana: <span>${u.daysPerWeek ? u.daysPerWeek + 'x' : '—'}</span></div>
-      <div class="user-detail">Experiência: <span>${u.experience !== undefined ? u.experience + ' anos' : '—'}</span></div>
-      <div class="user-detail">Objetivo: <span>${goalLabel(u.goal)}</span></div>
-      <div class="user-detail">Nível: <span>${levelLabel(u.level)}</span></div>
+      <div class="user-detail">Peso: <span>${u.weight ? esc(u.weight) + ' kg' : '—'}</span></div>
+      <div class="user-detail">Altura: <span>${u.height ? esc(u.height) + ' cm' : '—'}</span></div>
+      <div class="user-detail">Idade: <span>${u.age ? esc(u.age) + ' anos' : '—'}</span></div>
+      <div class="user-detail">Sexo: <span>${esc(genderLabel(u.gender))}</span></div>
+      <div class="user-detail">Dias/semana: <span>${u.daysPerWeek ? esc(u.daysPerWeek) + 'x' : '—'}</span></div>
+      <div class="user-detail">Experiência: <span>${u.experience !== undefined ? esc(u.experience) + ' anos' : '—'}</span></div>
+      <div class="user-detail">Objetivo: <span>${esc(goalLabel(u.goal))}</span></div>
+      <div class="user-detail">Nível: <span>${esc(levelLabel(u.level))}</span></div>
     </div>
     <div class="user-actions">
-      <select class="status-select" onchange="updateStatus('${u.uid}', this.value, this)">
+      <select class="status-select" onchange="updateStatus('${esc(u.uid)}', this.value, this)">
         <option value="pending"  ${u.status === 'pending'  ? 'selected' : ''}>⏳ Pendente</option>
         <option value="approved" ${u.status === 'approved' ? 'selected' : ''}>✅ Aprovado</option>
         <option value="rejected" ${u.status === 'rejected' ? 'selected' : ''}>❌ Rejeitado</option>
       </select>
+      <button class="btn-reject" onclick="deleteUser('${esc(u.uid)}', this)">🗑 Excluir</button>
     </div>
   </div>`;
 }
@@ -357,6 +369,28 @@ async function updateStatus(uid, newStatus, selectEl) {
     selectEl.disabled = false;
   }
 }
+
+// --- Excluir usuário (apenas o documento do Firestore) ---
+// IMPORTANTE: o registro no Firebase Authentication NÃO pode ser apagado pelo
+// SDK web — remova também no Console (Authentication → Users) para liberar o email.
+async function deleteUser(uid, btnEl) {
+  if (!confirm('Excluir este usuário do Firestore?\n\nLembre-se: depois apague também no Firebase Console → Authentication, senão o email continua ocupado.')) return;
+  btnEl.disabled = true;
+  try {
+    await db.collection('users').doc(uid).delete();
+    showToast('Excluído do Firestore. Remova também no Authentication!');
+  } catch(e) {
+    showToast('Erro ao excluir', 'error');
+    btnEl.disabled = false;
+  }
+}
+
+// --- Enter envia o login ---
+['admin-email', 'admin-password'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-admin-login').click();
+  });
+});
 </script>
 </body>
 </html>

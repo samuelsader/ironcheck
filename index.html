@@ -6,7 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a0a">
+<meta name="description" content="IronCheck — controle pessoal de treinos de musculação e cardio, semana a semana.">
 <title>IronCheck</title>
+<!-- PWA: estes arquivos ficam na raiz do repositório (junto do index.html) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -59,7 +64,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px 10px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -1358,7 +1363,7 @@ html, body {
   overflow-y: auto;
   font-family: 'Barlow', sans-serif;
 }
-#auth-overlay.active { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 48px 20px 40px; }
+#auth-overlay.active { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: calc(48px + env(safe-area-inset-top, 0px)) 20px 40px; }
 .auth-logo {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 32px;
@@ -2165,6 +2170,7 @@ html, body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <input type="file" id="import-input" accept=".json" style="display:none">
+        <div id="sync-status" style="font-size:12px;color:var(--text3);padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;line-height:1.5"></div>
         <button class="settings-btn" id="reset-week-btn">
           <span class="settings-btn-icon">🔄</span>
           <div class="settings-btn-text">
@@ -2179,9 +2185,9 @@ html, body {
       <div class="settings-section">
         <div class="settings-section-title">Sobre</div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.1</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.3</strong><br>
           App pessoal de controle de musculação.<br>
-          Dados salvos localmente no navegador.
+          Dados salvos no navegador e sincronizados na nuvem.
         </div>
       </div>
 
@@ -2260,7 +2266,7 @@ let state = {};
 
 // Safe storage wrapper — handles iOS file:// restrictions silently
 const Storage = (() => {
-  let _memCache = null;
+  const _memCache = {}; // fallback por chave (dados perdidos ao fechar, mas o app funciona)
   let _storageAvailable = null;
 
   function isAvailable() {
@@ -2281,18 +2287,28 @@ const Storage = (() => {
       if (isAvailable()) {
         try { return localStorage.getItem(key); } catch(e) {}
       }
-      return _memCache ? JSON.stringify(_memCache) : null;
+      return key in _memCache ? _memCache[key] : null;
     },
     set(key, value) {
       if (isAvailable()) {
         try { localStorage.setItem(key, value); return; } catch(e) {}
       }
-      // Fallback: keep in memory (data lost on close, but app works)
-      try { _memCache = JSON.parse(value); } catch(e) {}
+      _memCache[key] = value;
     },
     available: isAvailable
   };
 })();
+
+// Escapa strings vindas do usuário antes de inserir em innerHTML / atributos value=""
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function loadState() {
   try {
@@ -2318,9 +2334,54 @@ function loadState() {
 
 function saveState() {
   try {
+    state._updatedAt = Date.now(); // timestamp para resolução de conflito no sync
     Storage.set('ironcheck_v1', JSON.stringify(state));
   } catch(e) {
     // Silently ignore — state is still in memory for this session
+  }
+  scheduleCloudSync();
+}
+
+// ============================================================
+// ☁️ CLOUD SYNC — backup automático do state no Firestore
+// (campo appState no doc do usuário; last-writer-wins por _updatedAt)
+// ============================================================
+let _syncTimer = null;
+let _lastSyncAt = null;
+
+function scheduleCloudSync() {
+  if (_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(pushStateToCloud, 2500);
+}
+
+async function pushStateToCloud() {
+  try {
+    if (!auth.currentUser) return;
+    const json = JSON.stringify(state);
+    if (json.length > 900000) return; // margem de segurança do limite de 1MB/doc do Firestore
+    await db.collection('users').doc(auth.currentUser.uid).set({
+      appState: json,
+      appStateUpdatedAt: state._updatedAt || Date.now()
+    }, { merge: true });
+    _lastSyncAt = Date.now();
+    updateSyncStatusUI();
+  } catch(e) {
+    // Offline ou sem permissão — tenta de novo no próximo saveState
+  }
+}
+
+function updateSyncStatusUI() {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  let logged = false;
+  try { logged = !!auth.currentUser; } catch(e) {}
+  if (!logged) {
+    el.textContent = '☁️ Sincronização na nuvem: faça login para ativar';
+  } else if (_lastSyncAt) {
+    el.textContent = '☁️ Sincronizado com a nuvem às ' +
+      new Date(_lastSyncAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  } else {
+    el.textContent = '☁️ Sincronização automática ativa — seus treinos têm backup na nuvem';
   }
 }
 
@@ -2466,6 +2527,37 @@ function getWeightDisplay(log) {
     return log.seriesWeights.filter(v => v).join(' / ') + ' kg';
   }
   return log.weight ? log.weight + 'kg' : '—';
+}
+
+// ============================================================
+// 🏆 RECORDES PESSOAIS (PR)
+// ============================================================
+// Maior peso de um log (considera seriesWeights e o campo weight)
+function getMaxWeightOfLog(log) {
+  if (!log) return 0;
+  let max = 0;
+  if (log.seriesWeights) {
+    log.seriesWeights.forEach(v => {
+      const n = parseFloat(v);
+      if (!isNaN(n) && n > max) max = n;
+    });
+  }
+  const w = parseFloat(log.weight);
+  if (!isNaN(w) && w > max) max = w;
+  return max;
+}
+
+// PR de um exercício em todas as semanas. excludeWeek: ignora uma semana
+// (usado ao salvar, para comparar contra o histórico sem o registro atual)
+function getExercisePR(workoutId, exerciseId, excludeWeek) {
+  let best = 0, bestWeek = null;
+  const maxWeek = Math.max(8, state.totalWeeks || 8, state.currentWeek || 1);
+  for (let w = 1; w <= maxWeek; w++) {
+    if (excludeWeek && w === excludeWeek) continue;
+    const m = getMaxWeightOfLog(getLog(workoutId, exerciseId, w));
+    if (m > best) { best = m; bestWeek = w; }
+  }
+  return best > 0 ? { weight: best, week: bestWeek } : null;
 }
 
 // Get number of series for an exercise (stored per exercise id)
@@ -2615,6 +2707,10 @@ function renderHome() {
 function renderWeekProgressBar() {
   const week = state.currentWeek;
   const total = state.workouts.length;
+  if (total === 0) {
+    document.getElementById('weekly-progress-bar-wrap').innerHTML = '';
+    return;
+  }
   const done = state.workouts.filter(w => state.weeklyDone[`${w.id}_w${week}`]).length;
   const pct = Math.round((done / total) * 100);
   const isComplete = done === total;
@@ -2640,7 +2736,7 @@ function renderWeekProgressBar() {
 
 function renderWeekCardioBar() {
   const week = state.currentWeek;
-  const GOAL = 210; // 30min × 7 days
+  const GOAL = state.cardioWeeklyGoal > 0 ? state.cardioWeeklyGoal : 210; // meta do Config ou padrão 30min × 7
   const totalMin = getCardioWeekMinutes(week);
   const pct = Math.min(100, Math.round((totalMin / GOAL) * 100));
   const isComplete = totalMin >= GOAL;
@@ -2649,7 +2745,7 @@ function renderWeekCardioBar() {
     <div class="week-progress-wrap" style="margin-top:-8px;margin-bottom:20px">
       <div class="week-progress-header">
         <div class="week-progress-label">Cardio</div>
-        <div class="week-progress-count">${totalMin}<span>/210 min</span></div>
+        <div class="week-progress-count">${totalMin}<span>/${GOAL} min</span></div>
       </div>
       <div class="week-progress-track">
         <div class="week-progress-fill ${isComplete ? 'complete' : ''}" style="width:${pct}%"></div>
@@ -2668,6 +2764,26 @@ function renderNextWorkoutHero() {
   const hero = document.getElementById('next-workout-hero');
   const week = state.currentWeek;
   const todayDay = getTodayWorkoutDay();
+
+  // Onboarding: nenhum treino montado ainda → CTA para a aba Editar
+  const noWorkoutsYet = state.workouts.length === 0 ||
+    state.workouts.every(w => !w.exercises || w.exercises.length === 0);
+  if (noWorkoutsYet) {
+    hero.innerHTML = `
+      <div class="hero-card" id="hero-setup-card">
+        <div class="hero-label">👋 Comece por aqui</div>
+        <div class="hero-title">Monte sua grade de treinos</div>
+        <div class="hero-meta">Adicione os exercícios das suas fichas na aba Editar — leva 2 minutos</div>
+        <button class="hero-btn">Montar Treinos →</button>
+      </div>`;
+    document.getElementById('hero-setup-card').addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector('[data-screen="edit-screen"]').classList.add('active');
+      showScreen('edit-screen');
+      renderEditScreen();
+    });
+    return;
+  }
 
   // Find today's workout
   const todayWorkout = state.workouts.find(w => w.day === todayDay);
@@ -2690,20 +2806,20 @@ function renderNextWorkoutHero() {
       return l.reps || l.weight;
     }).length;
     hero.innerHTML = `
-      <div class="hero-card" id="hero-open-btn">
+      <div class="hero-card" id="hero-open-card">
         <div class="hero-label">💪 Treino de Hoje</div>
-        <div class="hero-title">${todayWorkout.name}</div>
+        <div class="hero-title">${esc(todayWorkout.name)}</div>
         <div class="hero-meta">${todayDay} &middot; ${todayWorkout.exercises.length} exercícios &middot; ${logged} anotados</div>
-        <button class="hero-btn" id="hero-open-btn">Iniciar Treino →</button>
+        <button class="hero-btn">Iniciar Treino →</button>
       </div>`;
-    document.getElementById('hero-open-btn').addEventListener('click', () => showWorkout(todayWorkout.id, true));
+    document.getElementById('hero-open-card').addEventListener('click', () => showWorkout(todayWorkout.id, true));
   } else if (todayWorkout && todayDone) {
     // Today done — show next
     hero.innerHTML = `
       <div class="hero-rest">
         <div class="hero-rest-emoji">✅</div>
         <div class="hero-rest-title">Treino de hoje concluído!</div>
-        <div class="hero-rest-sub">${nextWorkout ? 'Próximo: ' + nextWorkout.name + ' (' + nextWorkout.day + ')' : 'Semana completa — descanse bem!'}</div>
+        <div class="hero-rest-sub">${nextWorkout ? 'Próximo: ' + esc(nextWorkout.name) + ' (' + esc(nextWorkout.day) + ')' : 'Semana completa — descanse bem!'}</div>
       </div>`;
   } else if (!todayWorkout) {
     // Rest day
@@ -2711,7 +2827,7 @@ function renderNextWorkoutHero() {
       <div class="hero-rest">
         <div class="hero-rest-emoji">😴</div>
         <div class="hero-rest-title">Dia de descanso</div>
-        <div class="hero-rest-sub">${nextWorkout ? 'Próximo treino: ' + nextWorkout.name + ' (' + nextWorkout.day + ')' : 'Aproveite a recuperação'}</div>
+        <div class="hero-rest-sub">${nextWorkout ? 'Próximo treino: ' + esc(nextWorkout.name) + ' (' + esc(nextWorkout.day) + ')' : 'Aproveite a recuperação'}</div>
       </div>`;
   } else {
     hero.innerHTML = '';
@@ -2780,7 +2896,7 @@ function renderWeeklyHeatmap() {
       const dots = state.workouts.map((wk, i) => {
         const done = state.weeklyDone[`${wk.id}_w${w}`];
         const colors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308'];
-        return `<div class="heatmap-dot ${done ? 'done' : ''}" style="${done ? `background:${colors[i]}` : ''}"></div>`;
+        return `<div class="heatmap-dot ${done ? 'done' : ''}" style="${done ? `background:${colors[i % colors.length]}` : ''}"></div>`;
       }).join('');
       const doneCount = state.workouts.filter(wk => state.weeklyDone[`${wk.id}_w${w}`]).length;
       return `
@@ -2803,9 +2919,10 @@ function renderRecentActivity() {
   // Collect ALL log entries (one per exercise per week), not just the most recent per exercise
   // This way we surface what was actually logged most recently
   const entries = [];
+  const maxWeek = Math.max(8, state.totalWeeks || 8, state.currentWeek || 1);
   state.workouts.forEach((wk, wkIdx) => {
     wk.exercises.forEach((ex, exIdx) => {
-      for (let w = 8; w >= 1; w--) {
+      for (let w = maxWeek; w >= 1; w--) {
         const l = getLog(wk.id, ex.id, w);
         if (l.reps || l.weight) {
           // Use week as primary sort key, workout+exercise index as tiebreaker
@@ -2842,12 +2959,12 @@ function renderRecentActivity() {
       <div class="recent-item">
         <div class="recent-icon">${emoji}</div>
         <div class="recent-info">
-          <div class="recent-ex">${entry.exercise.name}</div>
-          <div class="recent-workout">${entry.workout.name} &middot; Sem ${entry.week}</div>
+          <div class="recent-ex">${esc(entry.exercise.name)}</div>
+          <div class="recent-workout">${esc(entry.workout.name)} &middot; Sem ${entry.week}</div>
         </div>
         <div class="recent-val">
-          <div class="recent-weight">${entry.log.weight ? entry.log.weight + 'kg' : '—'}</div>
-          <div class="recent-reps">${entry.log.reps || '—'}</div>
+          <div class="recent-weight">${entry.log.weight ? esc(entry.log.weight) + 'kg' : '—'}</div>
+          <div class="recent-reps">${esc(entry.log.reps) || '—'}</div>
         </div>
       </div>`;
   }).join('');
@@ -2862,6 +2979,14 @@ function renderWorkoutGrid() {
   const week = state.currentWeek;
   const grid = document.getElementById('workout-grid');
   const todayDay = getTodayWorkoutDay();
+  if (state.workouts.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="emoji">🏋️</div>
+        <p>Nenhum treino criado ainda.<br>Vá na aba <strong>Editar</strong> e toque em "+ Novo Treino".</p>
+      </div>`;
+    return;
+  }
   grid.innerHTML = state.workouts.map((w, i) => {
     const isDone = state.weeklyDone[`${w.id}_w${week}`];
     const isToday = w.day === todayDay;
@@ -2872,14 +2997,14 @@ function renderWorkoutGrid() {
     const colors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308'];
     return `
       <div class="workout-card ${isDone ? 'done' : ''} ${isToday ? 'today' : ''}" data-wid="${w.id}">
-        <div class="workout-num" style="${isDone ? '' : `color:${colors[i]};opacity:0.4`}">${String(i+1).padStart(2,'0')}</div>
+        <div class="workout-num" style="${isDone ? '' : `color:${colors[i % colors.length]};opacity:0.4`}">${String(i+1).padStart(2,'0')}</div>
         <div class="workout-info">
           <div style="display:flex;align-items:center;gap:8px">
-            <div class="workout-name">${w.name}</div>
+            <div class="workout-name">${esc(w.name)}</div>
             ${isToday ? '<span class="badge badge-orange">HOJE</span>' : ''}
           </div>
-          <div class="workout-meta">${w.day || ''} &middot; ${w.exercises.length} exercícios &middot; ${loggedExs}/${w.exercises.length} anotados</div>
-          <div class="progress-bar-bg"><div class="progress-bar" style="width:${w.exercises.length > 0 ? (loggedExs/w.exercises.length*100) : 0}%;background:${colors[i]}"></div></div>
+          <div class="workout-meta">${esc(w.day) || ''} &middot; ${w.exercises.length} exercícios &middot; ${loggedExs}/${w.exercises.length} anotados</div>
+          <div class="progress-bar-bg"><div class="progress-bar" style="width:${w.exercises.length > 0 ? (loggedExs/w.exercises.length*100) : 0}%;background:${colors[i % colors.length]}"></div></div>
         </div>
         <div class="workout-check">${isDone ? '✓' : ''}</div>
       </div>
@@ -2907,6 +3032,9 @@ function renderWeekTabs() {
       renderExercises();
     });
   });
+  // Centralizar a semana ativa (importante em planos longos)
+  const activeTab = tabs.querySelector('.week-tab.active');
+  if (activeTab) activeTab.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
 function buildSeriesWeightInputs(exId, seriesCount, currentSeriesWeights) {
@@ -2918,7 +3046,7 @@ function buildSeriesWeightInputs(exId, seriesCount, currentSeriesWeights) {
         <div class="input-label">Série ${i+1}</div>
         <div style="display:flex;align-items:center;gap:4px">
           <input type="text" inputmode="decimal" class="gym-input series-weight-input"
-            data-series="${i}" id="sw_${exId}_${i}" value="${val}" placeholder="kg" style="width:70px;text-align:center">
+            data-series="${i}" id="sw_${exId}_${i}" value="${esc(val)}" placeholder="kg" style="width:70px;text-align:center">
           <span style="font-size:11px;color:var(--text3)">kg</span>
         </div>
       </div>`;
@@ -2950,7 +3078,7 @@ function renderExercises() {
       }
     }
     const lastLabel = lastLog
-      ? `Sem ${lastLogWeek}: ${getWeightDisplay(lastLog)} · ${lastLog.reps || '—'}`
+      ? `Sem ${lastLogWeek}: ${esc(getWeightDisplay(lastLog))} · ${esc(lastLog.reps) || '—'}`
       : 'Sem registro anterior';
 
     // Warmup suggestion
@@ -2961,6 +3089,12 @@ function renderExercises() {
       : null;
     const warmupChip = warmupWeight !== null
       ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(249,115,22,0.12);color:var(--accent);border:1px solid rgba(249,115,22,0.3);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🔥 Aquec. ${warmupWeight}kg</span>`
+      : '';
+
+    // Recorde pessoal (maior peso já registrado neste exercício)
+    const pr = getExercisePR(activeWorkoutId, ex.id, null);
+    const prChip = pr
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.35);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🏆 PR ${pr.weight}kg</span>`
       : '';
 
     // Series expand state — stored per-exercise in DOM via id
@@ -2974,16 +3108,16 @@ function renderExercises() {
       const simpleInitWeight = simpleLog.weight || (lastLog ? (lastLog.weight || '') : '');
       // Badge de peso salvo no header
       const savedBadge = simpleLog.weight
-        ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--accent)">${simpleLog.weight}<span style="font-size:11px;font-weight:600;color:var(--text3)"> kg</span></span>`
-        : (lastLog && lastLog.weight ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--text3)">${lastLog.weight}<span style="font-size:11px;font-weight:600;color:var(--text3)"> kg</span></span>` : `<span style="font-size:11px;color:var(--text3)">—</span>`);
+        ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--accent)">${esc(simpleLog.weight)}<span style="font-size:11px;font-weight:600;color:var(--text3)"> kg</span></span>`
+        : (lastLog && lastLog.weight ? `<span style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--text3)">${esc(lastLog.weight)}<span style="font-size:11px;font-weight:600;color:var(--text3)"> kg</span></span>` : `<span style="font-size:11px;color:var(--text3)">—</span>`);
 
       return `
         <div class="exercise-card" data-exid="${ex.id}" data-mode="simple">
           <div class="exercise-header">
             <div class="exercise-num">${idx + 1}</div>
             <div class="exercise-name-wrap" style="flex:1">
-              <div class="exercise-name">${ex.name}</div>
-              <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">${lastLabel}${warmupChip}</div>
+              <div class="exercise-name">${esc(ex.name)}</div>
+              <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">${lastLabel}${warmupChip}${prChip}</div>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               ${savedBadge}
@@ -2997,7 +3131,7 @@ function renderExercises() {
                 style="width:44px;height:52px;background:var(--bg4);border:1px solid var(--border);border-right:none;border-radius:10px 0 0 10px;font-size:20px;font-weight:700;color:var(--text2);cursor:pointer;flex-shrink:0">−</button>
               <div style="position:relative;flex:1;max-width:140px">
                 <input type="text" inputmode="decimal" id="weight_${ex.id}"
-                  value="${simpleInitWeight}"
+                  value="${esc(simpleInitWeight)}"
                   placeholder="0"
                   style="width:100%;height:52px;background:var(--bg4);border:1px solid var(--border);border-left:none;border-right:none;font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;color:var(--accent);text-align:center;box-sizing:border-box">
                 <span style="position:absolute;right:8px;bottom:7px;font-size:11px;font-weight:700;color:var(--text3);pointer-events:none">kg</span>
@@ -3007,7 +3141,7 @@ function renderExercises() {
             </div>
             <!-- Obs discreta -->
             <input type="text" class="gym-input" id="notes_${ex.id}"
-              value="${simpleLog.notes || ''}"
+              value="${esc(simpleLog.notes || '')}"
               placeholder="Observação (opcional)"
               style="width:100%;margin-bottom:8px;font-size:13px;color:var(--text2);box-sizing:border-box">
             <button class="save-exercise-btn" data-exid="${ex.id}" data-mode="simple"
@@ -3022,8 +3156,8 @@ function renderExercises() {
         <div class="exercise-header">
           <div class="exercise-num">${idx + 1}</div>
           <div class="exercise-name-wrap">
-            <div class="exercise-name">${ex.name}</div>
-            <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${lastLabel}${warmupChip}</div>
+            <div class="exercise-name">${esc(ex.name)}</div>
+            <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${lastLabel}${warmupChip}${prChip}</div>
           </div>
           <div class="exercise-status ${hasCurrent ? 'filled' : ''}"></div>
         </div>
@@ -3032,7 +3166,7 @@ function renderExercises() {
           <div style="display:flex;align-items:flex-end;gap:8px">
             <div class="input-group" style="flex:1;display:${usingSeries ? 'none' : ''}">
               <div class="input-label">Peso (kg)</div>
-              <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${log.weight || ''}" placeholder="ex: 40">
+              <input type="text" inputmode="decimal" class="gym-input" id="weight_${ex.id}" value="${esc(log.weight || '')}" placeholder="ex: 40">
             </div>
             <button class="series-toggle-btn ${usingSeries ? 'active' : ''}" data-exid="${ex.id}"
               style="flex-shrink:0;${!usingSeries ? '' : 'width:100%;'}">
@@ -3061,7 +3195,7 @@ function renderExercises() {
           <div class="input-row">
             <div class="input-group" style="flex:1">
               <div class="input-label">Repetições</div>
-              <input type="text" class="gym-input" id="reps_${ex.id}" value="${log.reps || ''}" placeholder="ex: 12-10-8">
+              <input type="text" class="gym-input" id="reps_${ex.id}" value="${esc(log.reps || '')}" placeholder="ex: 12-10-8">
             </div>
           </div>
           <button class="save-exercise-btn" data-exid="${ex.id}">Salvar</button>
@@ -3165,11 +3299,17 @@ function renderExercises() {
       if (isSimple) {
         const weight = document.getElementById(`weight_${exId}`)?.value.trim() || '';
         const notes  = document.getElementById(`notes_${exId}`)?.value.trim() || '';
+        const prBefore = getExercisePR(activeWorkoutId, exId, activeWeek);
         state.logs[activeWorkoutId][exId][`w${activeWeek}`] = { weight, notes, reps: '', seriesWeights: null };
         saveState();
         const card = btn.closest('.exercise-card');
         card.querySelector('.exercise-status').classList.toggle('filled', !!(weight || notes));
-        showToast('Salvo! 💪');
+        const newMax = parseFloat(weight) || 0;
+        if (prBefore && newMax > prBefore.weight) {
+          showToast(`🏆 NOVO RECORDE! ${newMax}kg`);
+        } else {
+          showToast('Salvo! 💪');
+        }
         card.querySelector('.exercise-body').classList.remove('open');
         return;
       }
@@ -3190,13 +3330,19 @@ function renderExercises() {
         weight = document.getElementById(`weight_${exId}`)?.value.trim() || '';
       }
 
+      const prBefore = getExercisePR(activeWorkoutId, exId, activeWeek);
       state.logs[activeWorkoutId][exId][`w${activeWeek}`] = { reps, weight, seriesWeights };
       saveState();
 
       const card = btn.closest('.exercise-card');
       const dot = card.querySelector('.exercise-status');
       dot.classList.toggle('filled', !!(reps || weight));
-      showToast('Salvo! 💪');
+      const newMax = getMaxWeightOfLog({ weight, seriesWeights });
+      if (prBefore && newMax > prBefore.weight) {
+        showToast(`🏆 NOVO RECORDE! ${newMax}kg`);
+      } else {
+        showToast('Salvo! 💪');
+      }
       card.querySelector('.exercise-body').classList.remove('open');
     });
   });
@@ -3217,7 +3363,7 @@ function renderCardioScreen() {
 
 function renderCardioWeekTabs() {
   const tabs = document.getElementById('cardio-week-tabs');
-  const weeks = Array.from({length: 8}, (_, i) => i + 1);
+  const weeks = Array.from({length: Math.max(8, state.totalWeeks || 8)}, (_, i) => i + 1);
   tabs.innerHTML = weeks.map(w => `
     <div class="week-tab ${w === getCardioActiveWeek() ? 'active' : ''}" data-week="${w}">Sem ${w}</div>
   `).join('');
@@ -3228,6 +3374,9 @@ function renderCardioWeekTabs() {
       renderCardioDays();
     });
   });
+  // Centralizar a semana ativa (importante em planos longos)
+  const activeTab = tabs.querySelector('.week-tab.active');
+  if (activeTab) activeTab.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
 function renderCardioDays() {
@@ -3252,13 +3401,15 @@ function renderCardioDays() {
     const log = getCardioLog(week, day);
     const isDone = log.done && log.minutes;
 
+    const pillLabel = (log.type === 'outro' && log.outro) ? '⚡ ' + log.outro : getCardioLabel(log.type);
+
     return `
       <div class="cardio-day-card ${isDone ? 'has-data' : ''}" data-day="${day}">
         <div class="cardio-day-header">
           <div class="cardio-day-name">${day}</div>
-          <div class="cardio-day-workout">${workout ? workout.name : 'Descanso'}</div>
+          <div class="cardio-day-workout">${workout ? esc(workout.name) : 'Descanso'}</div>
           ${isDone
-            ? `<div class="cardio-summary-pill">${getCardioLabel(log.type)} · ${log.minutes}min</div>
+            ? `<div class="cardio-summary-pill">${esc(pillLabel)} · ${esc(log.minutes)}min</div>
                <div class="cardio-expand-arrow" id="arrow_${day}">▾</div>`
             : `<label class="toggle-switch" onclick="event.stopPropagation()">
                  <input type="checkbox" class="cardio-toggle" data-day="${day}">
@@ -3270,13 +3421,16 @@ function renderCardioDays() {
           <div class="cardio-type-row" style="flex-wrap:wrap">
             ${(state.cardioTypes || DEFAULT_DATA.cardioTypes).map(t => `
               <div class="cardio-type-btn ${log.type === t.id ? 'selected' : ''}" data-day="${day}" data-type="${t.id}">
-                ${t.emoji} ${t.label}
+                ${t.emoji} ${esc(t.label)}
               </div>`).join('')}
           </div>
+          <input type="text" class="cardio-outro-input ${log.type === 'outro' ? 'visible' : ''}"
+            id="cardio-outro-${day}" value="${esc(log.outro || '')}" maxlength="40"
+            placeholder="Qual atividade? (ex: Futebol)">
           <div class="cardio-time-row">
             <div class="cardio-time-label">Duração</div>
             <input type="number" inputmode="numeric" class="cardio-time-input gym-input"
-              id="cardio-min-${day}" value="${log.minutes || ''}" placeholder="0" min="1" max="300">
+              id="cardio-min-${day}" value="${esc(log.minutes || '')}" placeholder="0" min="1" max="300">
             <div class="cardio-time-unit">MIN</div>
           </div>
           <button class="cardio-save-btn" data-day="${day}">Salvar</button>
@@ -3320,6 +3474,12 @@ function renderCardioDays() {
       const day = btn.dataset.day;
       list.querySelectorAll(`.cardio-type-btn[data-day="${day}"]`).forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
+      // Campo "Outro" só aparece quando o tipo Outro está selecionado
+      const outroInput = document.getElementById(`cardio-outro-${day}`);
+      if (outroInput) {
+        outroInput.classList.toggle('visible', btn.dataset.type === 'outro');
+        if (btn.dataset.type === 'outro') outroInput.focus();
+      }
     });
   });
 
@@ -3330,9 +3490,10 @@ function renderCardioDays() {
       const selectedType = list.querySelector(`.cardio-type-btn.selected[data-day="${day}"]`);
       const type = selectedType ? selectedType.dataset.type : '';
       const minutes = document.getElementById(`cardio-min-${day}`)?.value?.trim() || '';
+      const outro = type === 'outro' ? (document.getElementById(`cardio-outro-${day}`)?.value?.trim() || '') : '';
       if (!type) { showToast('Selecione o tipo de cardio'); return; }
       if (!minutes || parseInt(minutes) < 1) { showToast('Informe a duração'); return; }
-      setCardioLog(week, day, { done: true, type, minutes });
+      setCardioLog(week, day, { done: true, type, outro, minutes });
       showToast('Cardio salvo! 🏃');
       renderCardioDays();
     });
@@ -3388,16 +3549,23 @@ function renderDashboard() {
   const exSel = document.getElementById('dash-exercise-select');
   const cardioTypeSel = document.getElementById('dash-cardio-type-select');
 
+  // Populate cardio type filter — inclui tipos customizados
+  const curCardioVal = cardioTypeSel.value || 'all';
+  const allCardioTypes = state.cardioTypes || DEFAULT_DATA.cardioTypes;
+  cardioTypeSel.innerHTML = '<option value="all">Todos os tipos</option>' +
+    allCardioTypes.map(t => `<option value="${esc(t.id)}">${t.emoji} ${esc(t.label)}</option>`).join('');
+  cardioTypeSel.value = Array.from(cardioTypeSel.options).some(o => o.value === curCardioVal) ? curCardioVal : 'all';
+
   // Populate workout select
   const currentWVal = wSel.value;
   wSel.innerHTML = '<option value="">— Treino —</option>' +
-    state.workouts.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+    state.workouts.map(w => `<option value="${w.id}">${esc(w.name)}</option>`).join('');
   if (currentWVal) wSel.value = currentWVal;
 
   wSel.onchange = () => {
     const workout = state.workouts.find(w => w.id === wSel.value);
     exSel.innerHTML = '<option value="">— Exercício —</option>' +
-      (workout ? workout.exercises.map(ex => `<option value="${ex.id}">${ex.name}</option>`).join('') : '');
+      (workout ? workout.exercises.map(ex => `<option value="${ex.id}">${esc(ex.name)}</option>`).join('') : '');
     exSel.onchange = () => renderDashboardCharts(wSel.value, exSel.value);
     renderDashboardCharts(wSel.value, null);
   };
@@ -3428,7 +3596,8 @@ function renderCardioDashboard() {
     return;
   }
 
-  const labels = Array.from({length: 8}, (_, i) => `Sem ${i+1}`);
+  const numWeeks = Math.max(8, state.totalWeeks || 8, state.currentWeek || 1);
+  const labels = Array.from({length: numWeeks}, (_, i) => `Sem ${i+1}`);
 
   // Minutes per week (filtered by type)
   const minutesPerWeek = labels.map((_, i) => {
@@ -3443,12 +3612,14 @@ function renderCardioDashboard() {
     return entries.filter(e => e.week === week && (typeFilter === 'all' || e.type === typeFilter)).length || null;
   });
 
-  // Type breakdown for current week
+  // Type breakdown for current week — agrupa por tipo, incluindo customizados
   const currentWeekEntries = entries.filter(e => e.week === state.currentWeek);
-  const bikeMin = currentWeekEntries.filter(e => e.type === 'bike').reduce((s,e) => s+(parseInt(e.minutes)||0),0);
-  const estMin  = currentWeekEntries.filter(e => e.type === 'esteira').reduce((s,e) => s+(parseInt(e.minutes)||0),0);
-  const outMin  = currentWeekEntries.filter(e => e.type === 'outro').reduce((s,e) => s+(parseInt(e.minutes)||0),0);
-  const totalMin = currentWeekEntries.reduce((s,e) => s+(parseInt(e.minutes)||0),0);
+  const mixByType = {};
+  currentWeekEntries.forEach(e => {
+    const key = e.type || 'outro';
+    mixByType[key] = (mixByType[key] || 0) + (parseInt(e.minutes) || 0);
+  });
+  const totalMin = Object.values(mixByType).reduce((a, b) => a + b, 0);
 
   // Summary stats
   const totalSessions = entries.filter(e => typeFilter === 'all' || e.type === typeFilter).length;
@@ -3500,7 +3671,7 @@ function renderCardioDashboard() {
           borderRadius: 4
         }]
       },
-      options: chartOptions('Minutos')
+      options: chartOptions('Minutos', 'min')
     });
 
     charts['cardio-sess'] = new Chart(document.getElementById('chart-cardio-sess'), {
@@ -3518,19 +3689,21 @@ function renderCardioDashboard() {
           fill: true
         }]
       },
-      options: chartOptions('Sessões')
+      options: chartOptions('Sessões', 'sessões')
     });
 
     if (totalMin > 0 && document.getElementById('chart-cardio-mix')) {
-      const mixData = [bikeMin, estMin, outMin].filter(v => v > 0);
-      const mixLabels = ['🚴 Bike','🏃 Esteira','⚡ Outro'].filter((_, i) => [bikeMin,estMin,outMin][i] > 0);
+      const mixEntries = Object.entries(mixByType).filter(([, min]) => min > 0);
+      const mixLabels = mixEntries.map(([type]) => getCardioLabel(type));
+      const mixData = mixEntries.map(([, min]) => min);
+      const mixColors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308','#06b6d4','#84cc16'];
       charts['cardio-mix'] = new Chart(document.getElementById('chart-cardio-mix'), {
         type: 'doughnut',
         data: {
           labels: mixLabels,
           datasets: [{
             data: mixData,
-            backgroundColor: ['#f97316','#3b82f6','#22c55e'],
+            backgroundColor: mixEntries.map((_, i) => mixColors[i % mixColors.length]),
             borderColor: '#1a1a1a',
             borderWidth: 3
           }]
@@ -3572,11 +3745,11 @@ function renderDashboardOverview() {
     return `
       <div style="margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <span style="font-size:13px;color:var(--text2)">${w.name}</span>
+          <span style="font-size:13px;color:var(--text2)">${esc(w.name)}</span>
           <span style="font-size:12px;color:var(--text3)">${logged}/${w.exercises.length}</span>
         </div>
         <div class="progress-bar-bg">
-          <div class="progress-bar" style="width:${pct}%;background:${colors[i]}"></div>
+          <div class="progress-bar" style="width:${pct}%;background:${colors[i % colors.length]}"></div>
         </div>
       </div>
     `;
@@ -3603,13 +3776,15 @@ function renderDashboardCharts(workoutId, exerciseId) {
   Object.values(charts).forEach(c => { try { c.destroy(); } catch(e) {} });
   charts = {};
 
+  const numWeeks = Math.max(8, state.totalWeeks || 8, state.currentWeek || 1);
+
   if (!exerciseId) {
     // Show all exercises for this workout across weeks
-    const labels = Array.from({length: 8}, (_, i) => `S${i+1}`);
+    const labels = Array.from({length: numWeeks}, (_, i) => `S${i+1}`);
 
     content.innerHTML = `
       <div class="chart-card">
-        <div class="chart-title">📈 Progressão de Pesos — ${workout.name}</div>
+        <div class="chart-title">📈 Progressão de Pesos — ${esc(workout.name)}</div>
         <div class="chart-container"><canvas id="chart-all-weights"></canvas></div>
       </div>
     `;
@@ -3637,7 +3812,7 @@ function renderDashboardCharts(workoutId, exerciseId) {
       charts['all'] = new Chart(document.getElementById('chart-all-weights'), {
         type: 'line',
         data: { labels, datasets },
-        options: chartOptions('Peso (kg)')
+        options: chartOptions('Peso (kg)', 'kg')
       });
     }, 50);
     return;
@@ -3646,7 +3821,7 @@ function renderDashboardCharts(workoutId, exerciseId) {
   const ex = workout.exercises.find(e => e.id === exerciseId);
   if (!ex) return;
 
-  const labels = Array.from({length: 8}, (_, i) => `Sem ${i+1}`);
+  const labels = Array.from({length: numWeeks}, (_, i) => `Sem ${i+1}`);
   const weights = labels.map((_, i) => {
     const l = getLog(workoutId, exerciseId, i + 1);
     return l.weight ? parseFloat(l.weight) : null;
@@ -3660,9 +3835,32 @@ function renderDashboardCharts(workoutId, exerciseId) {
     return nums.length > 0 ? nums[0] : null;
   });
 
+  // Stats do exercício: recorde, peso mais recente e nº de registros
+  const prAll = getExercisePR(workoutId, exerciseId, null);
+  let lastWeight = null, recordCount = 0;
+  for (let w = 1; w <= numWeeks; w++) {
+    const l = getLog(workoutId, exerciseId, w);
+    const m = getMaxWeightOfLog(l);
+    if (m > 0 || l.reps) { recordCount++; if (m > 0) lastWeight = m; }
+  }
+
   content.innerHTML = `
+    <div class="home-stats" style="margin-bottom:14px">
+      <div class="stat-card">
+        <div class="stat-val" style="color:#eab308">${prAll ? prAll.weight + 'kg' : '—'}</div>
+        <div class="stat-label">🏆 Recorde${prAll ? '<br>Sem ' + prAll.week : '<br>Pessoal'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${lastWeight !== null ? lastWeight + 'kg' : '—'}</div>
+        <div class="stat-label">Último<br>Peso</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">${recordCount}</div>
+        <div class="stat-label">Semanas<br>Registradas</div>
+      </div>
+    </div>
     <div class="chart-card">
-      <div class="chart-title">🏋️ ${ex.name}</div>
+      <div class="chart-title">🏋️ ${esc(ex.name)}</div>
       <div class="chart-container"><canvas id="chart-weight"></canvas></div>
     </div>
     <div class="chart-card">
@@ -3692,7 +3890,7 @@ function renderDashboardCharts(workoutId, exerciseId) {
           fill: true
         }]
       },
-      options: chartOptions('Peso (kg)')
+      options: chartOptions('Peso (kg)', 'kg')
     });
 
     charts['reps'] = new Chart(document.getElementById('chart-reps'), {
@@ -3708,7 +3906,7 @@ function renderDashboardCharts(workoutId, exerciseId) {
           borderRadius: 4
         }]
       },
-      options: chartOptions('Repetições')
+      options: chartOptions('Repetições', 'reps')
     });
 
     // History table
@@ -3718,7 +3916,7 @@ function renderDashboardCharts(workoutId, exerciseId) {
       const prevLog = i > 0 ? getLog(workoutId, exerciseId, i) : null;
       const weightNum = parseFloat(log.weight);
       const prevWeightNum = prevLog ? parseFloat(prevLog.weight) : null;
-      const diff = (weightNum && prevWeightNum) ? (weightNum - prevWeightNum) : null;
+      const diff = (weightNum && prevWeightNum) ? Math.round((weightNum - prevWeightNum) * 10) / 10 : null;
       const diffHtml = diff !== null
         ? `<span style="color:${diff > 0 ? 'var(--green)' : diff < 0 ? 'var(--red)' : 'var(--text3)'};font-size:11px">${diff > 0 ? '+' : ''}${diff}kg</span>`
         : '';
@@ -3726,8 +3924,8 @@ function renderDashboardCharts(workoutId, exerciseId) {
         <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
           <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--accent);font-size:14px">${l}</span>
           <div style="text-align:right">
-            <span style="font-size:13px;color:var(--text)">${log.weight ? log.weight+'kg' : '—'} ${diffHtml}</span><br>
-            <span style="font-size:12px;color:var(--text3)">${log.reps || '—'} reps</span>
+            <span style="font-size:13px;color:var(--text)">${log.weight ? esc(log.weight)+'kg' : '—'} ${diffHtml}</span><br>
+            <span style="font-size:12px;color:var(--text3)">${esc(log.reps) || '—'} reps</span>
           </div>
         </div>
       `;
@@ -3737,7 +3935,8 @@ function renderDashboardCharts(workoutId, exerciseId) {
   }, 50);
 }
 
-function chartOptions(yLabel) {
+function chartOptions(yLabel, unit) {
+  const u = unit || (yLabel === 'Peso (kg)' ? 'kg' : 'reps');
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -3750,7 +3949,7 @@ function chartOptions(yLabel) {
         titleColor: '#f97316',
         bodyColor: '#f0f0f0',
         callbacks: {
-          label: ctx => ` ${ctx.parsed.y !== null ? ctx.parsed.y : '—'} ${yLabel === 'Peso (kg)' ? 'kg' : 'reps'}`
+          label: ctx => ` ${ctx.parsed.y !== null ? ctx.parsed.y : '—'} ${u}`
         }
       }
     },
@@ -3807,7 +4006,7 @@ function renderEditScreen() {
   list.innerHTML = state.workouts.map((w) => `
     <div class="edit-workout-item" data-wid="${w.id}">
       <div class="edit-workout-header">
-        <input type="text" class="edit-workout-name-input" value="${w.name}" data-wid="${w.id}" placeholder="Nome do treino">
+        <input type="text" class="edit-workout-name-input" value="${esc(w.name)}" data-wid="${w.id}" placeholder="Nome do treino">
         <div class="icon-btn edit-toggle-btn">▾</div>
         <div class="delete-workout-btn" data-wid="${w.id}" title="Excluir treino" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;margin-left:4px">🗑</div>
       </div>
@@ -3815,7 +4014,7 @@ function renderEditScreen() {
         ${w.exercises.map((ex) => `
           <div class="edit-exercise-row" data-wid="${w.id}" data-exid="${ex.id}" draggable="false">
             <span class="drag-handle" title="Segurar para reordenar">⠿</span>
-            <input type="text" class="edit-ex-input" value="${ex.name}" data-wid="${w.id}" data-exid="${ex.id}" placeholder="Nome do exercício">
+            <input type="text" class="edit-ex-input" value="${esc(ex.name)}" data-wid="${w.id}" data-exid="${ex.id}" placeholder="Nome do exercício">
             <div class="delete-ex-btn" data-wid="${w.id}" data-exid="${ex.id}">✕</div>
           </div>
         `).join('')}
@@ -3866,6 +4065,9 @@ function renderEditScreen() {
       // Save current input values before re-render
       saveEditInputs();
       workout.exercises = workout.exercises.filter(e => e.id !== exid);
+      // Limpar dados órfãos do exercício removido
+      if (state.logs[wid] && state.logs[wid][exid]) delete state.logs[wid][exid];
+      if (state.seriesConfig && state.seriesConfig[exid]) delete state.seriesConfig[exid];
       saveState();
       renderEditScreen();
     });
@@ -3901,6 +4103,10 @@ function renderEditScreen() {
           state.workouts = state.workouts.filter(w => w.id !== wid);
           // Clean up logs for this workout
           if (state.logs[wid]) delete state.logs[wid];
+          // Clean up seriesConfig dos exercícios deste treino
+          (workout.exercises || []).forEach(ex => {
+            if (state.seriesConfig) delete state.seriesConfig[ex.id];
+          });
           // Clean up weeklyDone
           Object.keys(state.weeklyDone).forEach(k => {
             if (k.startsWith(wid + '_')) delete state.weeklyDone[k];
@@ -3922,9 +4128,9 @@ function showConfirmModal(title, message, onConfirm) {
   const modal = document.getElementById('modal-content');
   modal.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
-      <div class="modal-title" style="color:var(--red);margin-bottom:0">${title}</div>
+      <div class="modal-title" style="color:var(--red);margin-bottom:0">${esc(title)}</div>
     </div>
-    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">${message}</p>
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">${esc(message)}</p>
     <div style="display:flex;gap:10px">
       <button id="modal-cancel-btn" style="flex:1;padding:12px;background:var(--bg4);border:1px solid var(--border);
         color:var(--text);border-radius:var(--radius-sm);font-family:'Barlow Condensed',sans-serif;
@@ -3997,7 +4203,7 @@ function renderEditCardioTypes() {
         </div>
         <!-- Label input -->
         <input type="text" class="edit-ex-input cardio-type-label-input" data-idx="${i}"
-          value="${t.label}" placeholder="Nome do cardio"
+          value="${esc(t.label)}" placeholder="Nome do cardio"
           style="flex:1;font-size:14px;font-weight:600">
         <!-- Delete -->
         <div class="delete-ex-btn delete-cardio-type-btn" data-idx="${i}"
@@ -4252,6 +4458,7 @@ function computeCurrentWeekFromPlan() {
 
 function renderSettings() {
   updateSettingsUI();
+  updateSyncStatusUI();
   // Auto-compute week if plan date is set — only overwrite if no logs exist
   if (state.planStartDate) {
     const _hasLogs = state.logs && Object.keys(state.logs).some(wid =>
@@ -4327,7 +4534,7 @@ function renderSettings() {
     const allDays = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
     dayList.innerHTML = state.workouts.map(w => `
       <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px">
-        <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${w.name}</div>
+        <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(w.name)}</div>
         <select class="dash-select day-config-select" data-wid="${w.id}"
           style="flex-shrink:0;width:110px;padding:6px 8px;font-size:13px">
           <option value="">— Dia —</option>
@@ -4510,7 +4717,7 @@ function renderThemeSwatches() {
   const bgWrap = document.getElementById('bg-swatches');
   if (bgWrap) {
     bgWrap.innerHTML = BG_THEMES.map(t => {
-      const isActive = (state.bgTheme || 'Claro') === t.name;
+      const isActive = (state.bgTheme || 'Preto') === t.name;
       return `<div title="${t.name}" data-bg-theme="${t.name}"
         style="width:34px;height:34px;border-radius:50%;cursor:pointer;
           background:linear-gradient(135deg, ${t.bg} 50%, ${t.bg3} 50%);
@@ -4538,7 +4745,7 @@ function loadSavedTheme() {
       root.style.setProperty('--accent-glow',t.glow);
     }
   }
-  if (!state.bgTheme) state.bgTheme = 'Claro';
+  if (!state.bgTheme) state.bgTheme = 'Preto';
   if (state.bgTheme) {
     const t = BG_THEMES.find(t => t.name === state.bgTheme);
     if (t) {
@@ -4643,6 +4850,36 @@ function generateBlankWorkouts(daysPerWeek) {
     });
   }
   return workouts;
+}
+
+// --- Aplicar perfil aprovado e entrar no app (usado pelo observer e pelo "Verificar agora") ---
+function applyApprovedProfile(data) {
+  if (data.appMode) state.appMode = data.appMode;
+  // ☁️ Restaurar da nuvem se o backup remoto for mais recente que os dados locais
+  // (ex: primeiro login num celular novo — local vazio, nuvem com todo o histórico)
+  if (data.appState) {
+    try {
+      const remote = JSON.parse(data.appState);
+      if (remote && remote.workouts && (remote._updatedAt || 0) > (state._updatedAt || 0)) {
+        state = remote;
+        try { Storage.set('ironcheck_v1', JSON.stringify(state)); } catch(e) {}
+        loadSavedTheme();
+        showToast('Dados restaurados da nuvem ☁️');
+      }
+    } catch(e) { /* backup remoto corrompido — mantém os dados locais */ }
+  }
+  // Gerar treinos se não existem ou se são exatamente os gerados automaticamente (sem customização)
+  if (data.daysPerWeek) {
+    const hasCustomWorkouts = state.workouts && state.workouts.length > 0 &&
+      state.workouts.some(w => w.exercises && w.exercises.length > 0);
+    const hasCorrectCount = state.workouts && state.workouts.length === data.daysPerWeek;
+    if (!hasCustomWorkouts && !hasCorrectCount) {
+      state.workouts = generateBlankWorkouts(data.daysPerWeek);
+    }
+  }
+  saveState();
+  hideAuthOverlay();
+  renderHome();
 }
 
 // --- LOGIN ---
@@ -4832,7 +5069,7 @@ document.getElementById('btn-check-status').addEventListener('click', async () =
   try {
     const doc = await db.collection('users').doc(user.uid).get();
     if (doc.exists && doc.data().status === 'approved') {
-      hideAuthOverlay();
+      applyApprovedProfile(doc.data());
     } else {
       btn.textContent = 'AINDA PENDENTE';
       setTimeout(() => { btn.disabled = false; btn.textContent = 'Verificar agora'; }, 2500);
@@ -4854,6 +5091,18 @@ document.getElementById('btn-logout-pending').addEventListener('click', authLogo
 document.getElementById('btn-goto-register').addEventListener('click', () => showAuthScreen('register'));
 document.getElementById('btn-goto-login').addEventListener('click', () => showAuthScreen('login'));
 
+// --- Enter envia o formulário nas telas de auth ---
+[
+  ['login-email', 'btn-login'],
+  ['login-password', 'btn-login'],
+  ['forgot-email', 'btn-send-reset']
+].forEach(([inputId, btnId]) => {
+  const input = document.getElementById(inputId);
+  if (input) input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById(btnId).click();
+  });
+});
+
 // --- OBSERVER PRINCIPAL — controla tudo ---
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
@@ -4870,23 +5119,7 @@ auth.onAuthStateChanged(async (user) => {
   try {
     const doc = await db.collection('users').doc(user.uid).get();
     if (doc.exists && doc.data().status === 'approved') {
-      // Aplicar treinos em branco baseados nos dias cadastrados
-      const data = doc.data();
-      // Aplicar dados do Firebase ao state
-      if (data.appMode && !state.appMode) state.appMode = data.appMode;
-      if (data.appMode) state.appMode = data.appMode;
-
-      // Gerar treinos se não existem ou se são exatamente os gerados automaticamente (sem customização)
-      if (data.daysPerWeek) {
-        const hasCustomWorkouts = state.workouts && state.workouts.length > 0 &&
-          state.workouts.some(w => w.exercises && w.exercises.length > 0);
-        const hasCorrectCount = state.workouts && state.workouts.length === data.daysPerWeek;
-        if (!hasCustomWorkouts && !hasCorrectCount) {
-          state.workouts = generateBlankWorkouts(data.daysPerWeek);
-          saveState();
-        }
-      }
-      hideAuthOverlay();
+      applyApprovedProfile(doc.data());
     } else {
       showAuthOverlay();
       showAuthScreen('pending');
@@ -5100,6 +5333,11 @@ if (state.planStartDate) {
 }
 checkStorageWarning();
 renderHome();
+
+// PWA: registrar o service worker (só em http/https — ignora file:// local)
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 
 </script>
 </body>

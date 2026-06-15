@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#060607">
+<meta name="theme-color" content="#0d0e10">
 <meta name="description" content="IronCheck — controle pessoal de treinos de musculação e cardio, semana a semana.">
 <title>IronCheck</title>
 <!-- PWA: estes arquivos ficam na raiz do repositório (junto do index.html) -->
@@ -56,7 +56,14 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-html, body {
+/* O <html> é o que o iOS usa para preencher a faixa de safe-area FORA da viewport
+   (a "barra" embaixo no app instalado). Pintamos com a cor da nav/header (bg2) para
+   essa faixa fundir com a barra inferior, em vez de mostrar o fundo do conteúdo. */
+html {
+  height: 100%;
+  background: var(--bg2);
+}
+body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Barlow', sans-serif;
@@ -2280,7 +2287,7 @@ html, body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.7</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.8</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>
@@ -4852,7 +4859,7 @@ function applyBgTheme(theme) {
   applyElevationTokens(theme);
   // Atualiza a cor da barra de status do iOS para combinar com o fundo
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', theme.bg);
+  if (meta) meta.setAttribute('content', theme.bg2);
   state.bgTheme = theme.name;
   saveState();
   renderThemeSwatches();
@@ -4925,7 +4932,7 @@ function loadSavedTheme() {
       root.style.setProperty('--text3',  t.text3);
       applyElevationTokens(t);
       const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', t.bg);
+      if (meta) meta.setAttribute('content', t.bg2);
     }
   }
 }

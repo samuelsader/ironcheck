@@ -187,9 +187,10 @@ html, body {
   border-top: none;
   box-shadow: 0 -1px 0 var(--border);
   flex-shrink: 0;
-  /* Folga p/ a barra de gestos sem deixar uma faixa vazia grande: desconta parte
-     do inset (a barrinha do iPhone é fina) mantendo um mínimo de 4px. */
-  padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) - 12px), 4px);
+  /* Folga p/ a barra de gestos com TETO: clamp limita o respiro inferior a no
+     máximo 16px, não importa quão grande seja o inset reportado pelo iOS — assim
+     nunca sobra aquela faixa branca grande, mas mantém ao menos 6px de folga. */
+  padding-bottom: clamp(6px, env(safe-area-inset-bottom, 0px), 16px);
   padding-left: max(env(safe-area-inset-left, 0px), 6px);
   padding-right: max(env(safe-area-inset-right, 0px), 6px);
 }

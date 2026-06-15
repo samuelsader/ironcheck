@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d0e10">
@@ -56,14 +56,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-/* O <html> é o que o iOS usa para preencher a faixa de safe-area FORA da viewport
-   (a "barra" embaixo no app instalado). Pintamos com a cor da nav/header (bg2) para
-   essa faixa fundir com a barra inferior, em vez de mostrar o fundo do conteúdo. */
-html {
-  height: 100%;
-  background: var(--bg2);
-}
-body {
+html, body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Barlow', sans-serif;
@@ -101,16 +94,13 @@ body {
 .edge-light.is-active::after { opacity: 1; }
 
 /* ===== LAYOUT ===== */
-/* position:fixed + inset:0 cobre a tela INTEIRA de forma garantida (inclusive a
-   faixa do indicador de gestos do iPhone), eliminando qualquer faixa de fundo que
-   aparecia abaixo do app quando 100dvh ficava mais curto que a tela. */
 #app {
   display: flex;
   flex-direction: column;
-  position: fixed;
-  top: 0; bottom: 0; left: 0; right: 0;
+  height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
+  position: relative;
 }
 
 /* ===== HEADER ===== */
@@ -118,9 +108,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding: 14px 16px 10px;
   background: color-mix(in srgb, var(--bg) 78%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(1.3);
   backdrop-filter: blur(20px) saturate(1.3);
@@ -197,12 +185,10 @@ body {
   border-top: none;
   box-shadow: 0 -1px 0 var(--border);
   flex-shrink: 0;
-  /* Folga p/ a barra de gestos com TETO: clamp limita o respiro inferior a no
-     máximo 16px, não importa quão grande seja o inset reportado pelo iOS — assim
-     nunca sobra aquela faixa branca grande, mas mantém ao menos 6px de folga. */
-  padding-bottom: clamp(6px, env(safe-area-inset-bottom, 0px), 16px);
-  padding-left: max(env(safe-area-inset-left, 0px), 6px);
-  padding-right: max(env(safe-area-inset-right, 0px), 6px);
+  /* Respiro horizontal pra Home/Config não encostarem nas bordas/cantos arredondados
+     (o "espremer" pedido). Sem viewport-fit=cover o iOS já posiciona a nav no lugar
+     certo verticalmente, então só o padding lateral basta. */
+  padding: 0 14px env(safe-area-inset-bottom, 0px);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   #nav { background: var(--bg2); }
@@ -2287,12 +2273,10 @@ body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.8</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.9</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>
-        <!-- Diagnóstico temporário (remover depois) -->
-        <div id="debug-info" style="margin-top:8px;font-family:monospace;font-size:11px;color:var(--text2);background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px;line-height:1.7;word-break:break-all"></div>
       </div>
 
       <div style="height:20px"></div>
@@ -4616,42 +4600,9 @@ document.getElementById('save-edits-btn').addEventListener('click', () => {
 // ============================================================
 // SETTINGS
 // ============================================================
-// Diagnóstico temporário da faixa inferior — mostra medidas reais do aparelho
-function updateDebugInfo() {
-  const el = document.getElementById('debug-info');
-  if (!el) return;
-  // lê o valor real de env(safe-area-inset-bottom)
-  const probe = document.createElement('div');
-  probe.style.cssText = 'position:fixed;bottom:0;left:0;height:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none';
-  document.body.appendChild(probe);
-  const safeB = getComputedStyle(probe).paddingBottom;
-  probe.remove();
-  const probeT = document.createElement('div');
-  probeT.style.cssText = 'position:fixed;top:0;left:0;height:0;padding-top:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
-  document.body.appendChild(probeT);
-  const safeT = getComputedStyle(probeT).paddingTop;
-  probeT.remove();
-  const app = document.getElementById('app').getBoundingClientRect();
-  const nav = document.getElementById('nav').getBoundingClientRect();
-  const navCS = getComputedStyle(document.getElementById('nav'));
-  const standalone = (('standalone' in navigator) && navigator.standalone === true) ||
-    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
-  const vv = window.visualViewport ? Math.round(window.visualViewport.height) : '?';
-  el.innerHTML =
-    `<b>standalone:</b> ${standalone}<br>` +
-    `<b>innerHeight:</b> ${window.innerHeight} &nbsp; <b>screen.h:</b> ${screen.height}<br>` +
-    `<b>visualViewport.h:</b> ${vv} &nbsp; <b>docClientH:</b> ${document.documentElement.clientHeight}<br>` +
-    `<b>safeTop:</b> ${safeT} &nbsp; <b>safeBottom:</b> ${safeB}<br>` +
-    `<b>nav padding-bottom:</b> ${navCS.paddingBottom}<br>` +
-    `<b>app.bottom:</b> ${Math.round(app.bottom)} &nbsp; <b>app.height:</b> ${Math.round(app.height)}<br>` +
-    `<b>nav.bottom:</b> ${Math.round(nav.bottom)} &nbsp; <b>nav.height:</b> ${Math.round(nav.height)}<br>` +
-    `<b>gap abaixo do app:</b> ${Math.round(window.innerHeight - app.bottom)}px`;
-}
-
 function renderSettings() {
   updateSettingsUI();
   updateSyncStatusUI();
-  updateDebugInfo();
 
   // Semana é automática: recalcula a partir da âncora (1ª atividade concluída)
   recomputeAutoWeek();

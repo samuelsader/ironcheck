@@ -187,9 +187,9 @@ html, body {
   border-top: none;
   box-shadow: 0 -1px 0 var(--border);
   flex-shrink: 0;
-  /* Respiro contra o notch/cantos arredondados e a barra de gestos do iPhone.
-     max() garante folga mínima mesmo quando o inset é 0 (Safari normal). */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Folga p/ a barra de gestos sem deixar uma faixa vazia grande: desconta parte
+     do inset (a barrinha do iPhone é fina) mantendo um mínimo de 4px. */
+  padding-bottom: max(calc(env(safe-area-inset-bottom, 0px) - 12px), 4px);
   padding-left: max(env(safe-area-inset-left, 0px), 6px);
   padding-right: max(env(safe-area-inset-right, 0px), 6px);
 }
@@ -203,7 +203,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 10px 4px 8px;
+  padding: 8px 4px 7px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
@@ -2205,11 +2205,6 @@ html, body {
         <div class="settings-section-title">Planejamento</div>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;flex-direction:column;gap:12px">
           <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Data de Início</div>
-            <input type="date" id="plan-start-date" class="gym-input" style="width:100%;font-size:15px">
-            <div style="font-size:11px;color:var(--text3);margin-top:4px" id="plan-week-info"></div>
-          </div>
-          <div>
             <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">Total de Semanas</div>
             <div style="display:flex;align-items:center;gap:10px">
               <button class="week-ctrl-btn" id="totalweeks-dec">−</button>
@@ -2218,22 +2213,8 @@ html, body {
               <span style="font-size:12px;color:var(--text3)">semanas no planejamento</span>
             </div>
           </div>
-          <div style="font-size:11px;color:var(--text3);padding-top:4px;border-top:1px solid var(--border)" id="plan-auto-note">
-            Com a data de início preenchida, a semana atual é calculada automaticamente.
-          </div>
-        </div>
-      </div>
-
-      <!-- Semana manual (só aparece quando sem data de início) -->
-      <div class="settings-section" id="manual-week-section">
-        <div class="settings-section-title">Semana Atual</div>
-        <div class="current-week-control">
-          <div class="week-ctrl-label">Semana de Treino</div>
-          <div class="week-ctrl-btns">
-            <button class="week-ctrl-btn" id="week-dec">−</button>
-            <div class="week-ctrl-val" id="week-val-display">1</div>
-            <button class="week-ctrl-btn" id="week-inc">+</button>
-          </div>
+          <div style="font-size:12px;color:var(--text2);padding-top:10px;border-top:1px solid var(--border);line-height:1.5" id="plan-auto-note"></div>
+          <button id="reset-anchor-btn" style="display:none;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer">🔄 Reiniciar contagem de semanas</button>
         </div>
       </div>
 
@@ -2295,7 +2276,7 @@ html, body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.4</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.5</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>
@@ -2356,7 +2337,7 @@ html, body {
 // ============================================================
 const DEFAULT_DATA = {
   currentWeek: 1,
-  planStartDate: null,
+  planAnchorDate: null, // data (ISO) da 1ª atividade concluída; ancora a contagem automática de semanas
   totalWeeks: 12,
   weeklyDone: {},
   workouts: [],
@@ -2767,6 +2748,7 @@ document.getElementById('training-done-btn').addEventListener('click', () => {
   state.weeklyDone[key] = !state.weeklyDone[key];
   saveState();
   const isDone = state.weeklyDone[key];
+  if (isDone) { ensureAnchor(); recomputeAutoWeek(); updateWeekBadge(); }
   const doneBtn = document.getElementById('training-done-btn');
   doneBtn.textContent = isDone ? '✅' : '✓';
   doneBtn.style.color = isDone ? 'var(--green)' : '';
@@ -2787,6 +2769,7 @@ function toggleInlineDone() {
   state.weeklyDone[key] = !state.weeklyDone[key];
   saveState();
   const isDone = state.weeklyDone[key];
+  if (isDone) { ensureAnchor(); recomputeAutoWeek(); updateWeekBadge(); }
   // Sincronizar botão do header
   const doneBtn = document.getElementById('training-done-btn');
   if (doneBtn) { doneBtn.textContent = isDone ? '✅' : '✓'; doneBtn.style.color = isDone ? 'var(--green)' : ''; }
@@ -2866,7 +2849,41 @@ function renderWeekCardioBar() {
 
 function updateWeekBadge() {
   document.getElementById('header-week-badge').textContent = `SEM ${state.currentWeek}`;
-  document.getElementById('week-val-display').textContent = state.currentWeek;
+  const wv = document.getElementById('week-val-display');
+  if (wv) wv.textContent = state.currentWeek;
+}
+
+// ============================================================
+// SEMANA AUTOMÁTICA — ancorada na 1ª atividade concluída
+// ============================================================
+// Quando o usuário conclui o 1º treino ou registra o 1º cardio, gravamos a data.
+// A semana atual passa a ser calculada sozinha (a cada 7 dias avança 1), limitada
+// ao total de semanas do planejamento.
+function getAutoWeek() {
+  if (!state.planAnchorDate) return null;
+  const anchor = new Date(state.planAnchorDate);
+  const today = new Date();
+  anchor.setHours(0,0,0,0); today.setHours(0,0,0,0);
+  const diffDays = Math.floor((today - anchor) / (1000*60*60*24));
+  const week = Math.floor(Math.max(0, diffDays) / 7) + 1;
+  return Math.min(week, state.totalWeeks || 12);
+}
+
+function recomputeAutoWeek() {
+  const w = getAutoWeek();
+  if (w !== null && w !== state.currentWeek) {
+    state.currentWeek = w;
+    saveState();
+  }
+}
+
+// Marca o início do plano na 1ª atividade (treino concluído ou cardio salvo)
+function ensureAnchor() {
+  if (!state.planAnchorDate) {
+    state.planAnchorDate = new Date().toISOString();
+    state.currentWeek = 1;
+    saveState();
+  }
 }
 
 // --- Hero: próximo treino ou descanso ---
@@ -3198,13 +3215,22 @@ function renderExercises() {
       ? Math.round(lastWeightNum * warmupPct / 100 * 2) / 2  // arredonda pro 0.5 mais próximo
       : null;
     const warmupChip = warmupWeight !== null
-      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);border-radius:var(--radius-pill);padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🔥 Aquec. ${warmupWeight}kg</span>`
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);border-radius:var(--radius-pill);padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:0.3px">🔥 Aquecimento ${warmupWeight}kg</span>`
       : '';
 
     // Recorde pessoal (maior peso já registrado neste exercício) — selo premium no accent
     const pr = getExercisePR(activeWorkoutId, ex.id, null);
     const prChip = pr
-      ? `<span class="tnum" style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:var(--radius-pill);padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px;box-shadow:0 0 14px var(--accent-glow)">🏆 PR ${pr.weight}kg</span>`
+      ? `<span class="tnum" style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:var(--radius-pill);padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:0.3px;box-shadow:0 0 14px var(--accent-glow)">🏆 Recorde ${pr.weight}kg</span>`
+      : '';
+
+    // Chips de Aquecimento/Recorde aparecem DENTRO do card aberto — não poluem a lista fechada.
+    // Um pontinho discreto no header sinaliza que há recorde, sem ocupar espaço.
+    const chipsRow = (warmupChip || prChip)
+      ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 12px">${prChip}${warmupChip}</div>`
+      : '';
+    const prDot = pr
+      ? `<span title="Tem recorde" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent-glow);margin-left:6px;flex-shrink:0"></span>`
       : '';
 
     // Series expand state — stored per-exercise in DOM via id
@@ -3226,8 +3252,8 @@ function renderExercises() {
           <div class="exercise-header">
             <div class="exercise-num">${idx + 1}</div>
             <div class="exercise-name-wrap" style="flex:1">
-              <div class="exercise-name">${esc(ex.name)}</div>
-              <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">${lastLabel}${warmupChip}${prChip}</div>
+              <div class="exercise-name" style="display:flex;align-items:center">${esc(ex.name)}${prDot}</div>
+              <div class="exercise-last">${lastLabel}</div>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               ${savedBadge}
@@ -3235,6 +3261,7 @@ function renderExercises() {
             </div>
           </div>
           <div class="exercise-body" id="body_${ex.id}">
+            ${chipsRow}
             <!-- Peso em destaque com ajuste rápido -->
             <div style="display:flex;align-items:center;justify-content:center;gap:0;margin:4px 0 8px">
               <button onclick="simpleAdjust('${ex.id}', -2.5)"
@@ -3266,12 +3293,13 @@ function renderExercises() {
         <div class="exercise-header">
           <div class="exercise-num">${idx + 1}</div>
           <div class="exercise-name-wrap">
-            <div class="exercise-name">${esc(ex.name)}</div>
-            <div class="exercise-last" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${lastLabel}${warmupChip}${prChip}</div>
+            <div class="exercise-name" style="display:flex;align-items:center">${esc(ex.name)}${prDot}</div>
+            <div class="exercise-last">${lastLabel}</div>
           </div>
           <div class="exercise-status ${hasCurrent ? 'filled' : ''}"></div>
         </div>
         <div class="exercise-body" id="body_${ex.id}">
+          ${chipsRow}
           <!-- Weight row: single field + "Pesos diferentes" button -->
           <div style="display:flex;align-items:flex-end;gap:8px">
             <div class="input-group" style="flex:1;display:${usingSeries ? 'none' : ''}">
@@ -3604,6 +3632,7 @@ function renderCardioDays() {
       if (!type) { showToast('Selecione o tipo de cardio'); return; }
       if (!minutes || parseInt(minutes) < 1) { showToast('Informe a duração'); return; }
       setCardioLog(week, day, { done: true, type, outro, minutes });
+      ensureAnchor(); recomputeAutoWeek(); updateWeekBadge();
       showToast('Cardio salvo! 🏃');
       renderCardioDays();
     });
@@ -4574,89 +4603,35 @@ document.getElementById('save-edits-btn').addEventListener('click', () => {
 // ============================================================
 // SETTINGS
 // ============================================================
-function computeCurrentWeekFromPlan() {
-  if (!state.planStartDate) return null;
-  const start = new Date(state.planStartDate);
-  const today = new Date();
-  start.setHours(0,0,0,0); today.setHours(0,0,0,0);
-  const diffDays = Math.floor((today - start) / (1000*60*60*24));
-  if (diffDays < 0) return 1;
-  const week = Math.floor(diffDays / 7) + 1;
-  const totalWeeks = state.totalWeeks || 12;
-  return Math.min(week, totalWeeks);
-}
-
 function renderSettings() {
   updateSettingsUI();
   updateSyncStatusUI();
-  // Auto-compute week if plan date is set — only overwrite if no logs exist
-  if (state.planStartDate) {
-    const _hasLogs = state.logs && Object.keys(state.logs).some(wid =>
-      Object.keys(state.logs[wid] || {}).some(exid =>
-        Object.keys(state.logs[wid][exid] || {}).length > 0
-      )
-    );
-    if (!_hasLogs) {
-      const computed = computeCurrentWeekFromPlan();
-      if (computed !== null && computed !== state.currentWeek) {
-        state.currentWeek = computed;
-        saveState();
-      }
-    }
-    document.getElementById('manual-week-section').style.display = 'none';
-    document.getElementById('plan-auto-note').textContent =
-      state.logs && _hasLogs
-        ? `Data salva. Semana atual: ${state.currentWeek} (ajuste manual acima se necessário)`
-        : `Semana atual calculada automaticamente: Semana ${state.currentWeek}`;
-  } else {
-    document.getElementById('manual-week-section').style.display = '';
-    document.getElementById('plan-auto-note').textContent =
-      'Com a data de início preenchida, a semana atual é calculada automaticamente.';
-  }
 
+  // Semana é automática: recalcula a partir da âncora (1ª atividade concluída)
+  recomputeAutoWeek();
   updateWeekBadge();
   renderThemeSwatches();
 
-  // Plan start date
-  const dateInput = document.getElementById('plan-start-date');
-  if (dateInput) {
-    dateInput.value = state.planStartDate || '';
-    dateInput.onchange = () => {
-      const newDate = dateInput.value || null;
-      state.planStartDate = newDate;
-      // When setting a plan date, do NOT auto-change currentWeek if user has logs
-      // The week will update on next app open only if no conflict
-      if (newDate) {
-        const computed = computeCurrentWeekFromPlan();
-        const hasAnyLogs = state.logs && Object.keys(state.logs).some(wid =>
-          Object.keys(state.logs[wid] || {}).some(exid =>
-            Object.keys(state.logs[wid][exid] || {}).length > 0
-          )
-        );
-        if (!hasAnyLogs) {
-          // No data yet — safe to auto-set week
-          state.currentWeek = computed || 1;
-        }
-        // If has logs: keep currentWeek as is, just save the date for future reference
-      }
-      saveState();
-      renderSettings();
-      renderHome();
-    };
+  // Nota de planejamento + botão de reiniciar contagem
+  const note = document.getElementById('plan-auto-note');
+  const resetBtn = document.getElementById('reset-anchor-btn');
+  const totalWeeks = state.totalWeeks || 12;
+  if (note) {
+    if (state.planAnchorDate) {
+      const ini = new Date(state.planAnchorDate).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+      note.innerHTML = `Você está na <strong style="color:var(--accent)">Semana ${state.currentWeek}</strong> de ${totalWeeks}. ` +
+        `A contagem começou em ${ini} (1º treino/cardio) e avança sozinha a cada 7 dias.`;
+    } else {
+      note.innerHTML = `A contagem de semanas começa <strong style="color:var(--accent)">automaticamente</strong> quando você concluir seu primeiro treino ou registrar um cardio. Depois disso, a semana avança sozinha a cada 7 dias.`;
+    }
   }
+  if (resetBtn) resetBtn.style.display = state.planAnchorDate ? 'flex' : 'none';
 
   // Total weeks
   const twVal = document.getElementById('totalweeks-val');
   if (twVal) {
     twVal.textContent = state.totalWeeks || 12;
   }
-
-  // Week tabs — update max based on totalWeeks
-  const totalWeeks = state.totalWeeks || 12;
-  document.getElementById('plan-week-info').textContent =
-    state.planStartDate
-      ? `Planejamento: ${totalWeeks} semanas · Semana atual: ${state.currentWeek}`
-      : '';
 
   // Day config list
   const dayList = document.getElementById('day-config-list');
@@ -4682,34 +4657,32 @@ function renderSettings() {
   }
 }
 
-document.getElementById('week-inc').addEventListener('click', () => {
-  state.currentWeek = Math.min(state.totalWeeks || 52, state.currentWeek + 1);
-  saveState();
-  updateWeekBadge();
-  renderHome();
-});
-
-document.getElementById('week-dec').addEventListener('click', () => {
-  state.currentWeek = Math.max(1, state.currentWeek - 1);
-  saveState();
-  updateWeekBadge();
-  renderHome();
-});
-
 document.getElementById('totalweeks-inc').addEventListener('click', () => {
   state.totalWeeks = Math.min(52, (state.totalWeeks || 12) + 1);
+  recomputeAutoWeek();
   saveState();
   document.getElementById('totalweeks-val').textContent = state.totalWeeks;
-  document.getElementById('plan-week-info').textContent =
-    state.planStartDate ? `Planejamento: ${state.totalWeeks} semanas · Semana atual: ${state.currentWeek}` : '';
+  renderSettings();
 });
 
 document.getElementById('totalweeks-dec').addEventListener('click', () => {
   state.totalWeeks = Math.max(1, (state.totalWeeks || 12) - 1);
+  recomputeAutoWeek();
   saveState();
   document.getElementById('totalweeks-val').textContent = state.totalWeeks;
-  document.getElementById('plan-week-info').textContent =
-    state.planStartDate ? `Planejamento: ${state.totalWeeks} semanas · Semana atual: ${state.currentWeek}` : '';
+  renderSettings();
+});
+
+// Reiniciar a contagem de semanas (zera a âncora; recomeça no próximo treino/cardio)
+document.getElementById('reset-anchor-btn').addEventListener('click', () => {
+  if (confirm('Reiniciar a contagem de semanas? Você voltará para a Semana 1 e a contagem recomeça no próximo treino ou cardio concluído. Seu histórico não será apagado.')) {
+    state.planAnchorDate = null;
+    state.currentWeek = 1;
+    saveState();
+    renderSettings();
+    renderHome();
+    showToast('Contagem reiniciada 🔄');
+  }
 });
 
 document.getElementById('export-btn').addEventListener('click', () => {
@@ -5034,6 +5007,12 @@ function applyApprovedProfile(data) {
       state.workouts = generateBlankWorkouts(data.daysPerWeek);
     }
   }
+  // Compat: migra planStartDate antigo (se veio da nuvem) para a âncora automática
+  if (state.planStartDate && !state.planAnchorDate) {
+    state.planAnchorDate = new Date(state.planStartDate).toISOString();
+  }
+  delete state.planStartDate;
+  recomputeAutoWeek();
   saveState();
   hideAuthOverlay();
   renderHome();
@@ -5480,22 +5459,13 @@ if (!state.tutorialDone && Storage.get('ironcheck_tutorial_done')) {
   saveState();
 }
 loadSavedTheme();
-// Auto-compute week from plan date on load — only if no existing log data
-if (state.planStartDate) {
-  const _hasAnyLogs = state.logs && Object.keys(state.logs).some(wid =>
-    Object.keys(state.logs[wid] || {}).some(exid =>
-      Object.keys(state.logs[wid][exid] || {}).length > 0
-    )
-  );
-  if (!_hasAnyLogs) {
-    const _start = new Date(state.planStartDate);
-    const _today = new Date();
-    _start.setHours(0,0,0,0); _today.setHours(0,0,0,0);
-    const _diff = Math.floor((_today - _start)/(1000*60*60*24));
-    const _computed = Math.min(_diff < 0 ? 1 : Math.floor(_diff/7)+1, state.totalWeeks||12);
-    if (_computed !== state.currentWeek) { state.currentWeek = _computed; saveState(); }
-  }
+// Migração: se existir planStartDate de versões antigas, vira a âncora da contagem
+if (state.planStartDate && !state.planAnchorDate) {
+  state.planAnchorDate = new Date(state.planStartDate).toISOString();
 }
+delete state.planStartDate;
+// Semana atual é automática a partir da âncora (1ª atividade concluída)
+recomputeAutoWeek();
 checkStorageWarning();
 renderHome();
 

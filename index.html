@@ -2280,10 +2280,12 @@ html, body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.6</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.7</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>
+        <!-- Diagnóstico temporário (remover depois) -->
+        <div id="debug-info" style="margin-top:8px;font-family:monospace;font-size:11px;color:var(--text2);background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:10px;line-height:1.7;word-break:break-all"></div>
       </div>
 
       <div style="height:20px"></div>
@@ -4607,9 +4609,42 @@ document.getElementById('save-edits-btn').addEventListener('click', () => {
 // ============================================================
 // SETTINGS
 // ============================================================
+// Diagnóstico temporário da faixa inferior — mostra medidas reais do aparelho
+function updateDebugInfo() {
+  const el = document.getElementById('debug-info');
+  if (!el) return;
+  // lê o valor real de env(safe-area-inset-bottom)
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:fixed;bottom:0;left:0;height:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none';
+  document.body.appendChild(probe);
+  const safeB = getComputedStyle(probe).paddingBottom;
+  probe.remove();
+  const probeT = document.createElement('div');
+  probeT.style.cssText = 'position:fixed;top:0;left:0;height:0;padding-top:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
+  document.body.appendChild(probeT);
+  const safeT = getComputedStyle(probeT).paddingTop;
+  probeT.remove();
+  const app = document.getElementById('app').getBoundingClientRect();
+  const nav = document.getElementById('nav').getBoundingClientRect();
+  const navCS = getComputedStyle(document.getElementById('nav'));
+  const standalone = (('standalone' in navigator) && navigator.standalone === true) ||
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+  const vv = window.visualViewport ? Math.round(window.visualViewport.height) : '?';
+  el.innerHTML =
+    `<b>standalone:</b> ${standalone}<br>` +
+    `<b>innerHeight:</b> ${window.innerHeight} &nbsp; <b>screen.h:</b> ${screen.height}<br>` +
+    `<b>visualViewport.h:</b> ${vv} &nbsp; <b>docClientH:</b> ${document.documentElement.clientHeight}<br>` +
+    `<b>safeTop:</b> ${safeT} &nbsp; <b>safeBottom:</b> ${safeB}<br>` +
+    `<b>nav padding-bottom:</b> ${navCS.paddingBottom}<br>` +
+    `<b>app.bottom:</b> ${Math.round(app.bottom)} &nbsp; <b>app.height:</b> ${Math.round(app.height)}<br>` +
+    `<b>nav.bottom:</b> ${Math.round(nav.bottom)} &nbsp; <b>nav.height:</b> ${Math.round(nav.height)}<br>` +
+    `<b>gap abaixo do app:</b> ${Math.round(window.innerHeight - app.bottom)}px`;
+}
+
 function renderSettings() {
   updateSettingsUI();
   updateSyncStatusUI();
+  updateDebugInfo();
 
   // Semana é automática: recalcula a partir da âncora (1ª atividade concluída)
   recomputeAutoWeek();

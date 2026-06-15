@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0a0a">
+<meta name="theme-color" content="#060607">
 <meta name="description" content="IronCheck — controle pessoal de treinos de musculação e cardio, semana a semana.">
 <title>IronCheck</title>
 <!-- PWA: estes arquivos ficam na raiz do repositório (junto do index.html) -->
@@ -17,11 +17,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #0a0a0a;
-  --bg2: #111111;
-  --bg3: #1a1a1a;
-  --bg4: #222222;
-  --border: #2a2a2a;
+  /* Fundos — tema Preto aprofundado p/ OLED (elevação por camadas, não por borda) */
+  --bg: #060607;
+  --bg2: #0d0e10;
+  --bg3: #131417;
+  --bg4: #1b1d21;
+  --border: #232529;
   --accent: #f97316;
   --accent2: #fb923c;
   --accent-dim: rgba(249,115,22,0.15);
@@ -33,9 +34,24 @@
   --red: #ef4444;
   --blue: #3b82f6;
   --purple: #a855f7;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.6);
+
+  /* Raios */
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* Elevação — sobrescritos por tema no JS (applyBgTheme) p/ funcionar no Claro */
+  --hairline: inset 0 1px 0 rgba(255,255,255,0.04);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow: 0 8px 24px -8px rgba(0,0,0,0.55);
+  --shadow-lg: 0 16px 40px -12px rgba(0,0,0,0.6);
+
+  /* Superfície de card premium: gradiente sutil simulando luz vinda de cima */
+  --card-bg: linear-gradient(180deg, color-mix(in srgb, var(--bg3) 100%, white 3%), var(--bg3));
+
+  /* Easing padrão calmo */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -47,7 +63,35 @@ html, body {
   height: 100%;
   overflow: hidden;
   user-select: none;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+/* Números de instrumento alinhados (sem "pulo" de largura) */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Respeitar usuários que pedem menos movimento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Assinatura: Edge Light — filete em gradiente que "acende" no elemento ativo/herói */
+.edge-light { position: relative; }
+.edge-light::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.25s var(--ease);
+  pointer-events: none;
+}
+.edge-light.is-active::after { opacity: 1; }
 
 /* ===== LAYOUT ===== */
 #app {
@@ -65,10 +109,18 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(20px) saturate(1.3);
+  border-bottom: none;
+  box-shadow: 0 1px 0 var(--border);
   flex-shrink: 0;
   z-index: 100;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #header { background: var(--bg2); }
 }
 
 .logo {
@@ -90,14 +142,15 @@ html, body {
 
 .week-badge {
   background: var(--accent-dim);
-  border: 1px solid var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   color: var(--accent);
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 4px 11px;
+  border-radius: var(--radius-pill);
   font-family: 'Barlow Condensed', sans-serif;
   letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
 }
 
 .icon-btn {
@@ -128,10 +181,20 @@ html, body {
 /* ===== BOTTOM NAV ===== */
 #nav {
   display: flex;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg2) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.3);
+  backdrop-filter: blur(20px) saturate(1.3);
+  border-top: none;
+  box-shadow: 0 -1px 0 var(--border);
   flex-shrink: 0;
+  /* Respiro contra o notch/cantos arredondados e a barra de gestos do iPhone.
+     max() garante folga mínima mesmo quando o inset é 0 (Safari normal). */
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(env(safe-area-inset-left, 0px), 6px);
+  padding-right: max(env(safe-area-inset-right, 0px), 6px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #nav { background: var(--bg2); }
 }
 
 .nav-item {
@@ -146,20 +209,21 @@ html, body {
   position: relative;
 }
 
-.nav-icon { font-size: 20px; margin-bottom: 2px; }
-.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; color: var(--text3); text-transform: uppercase; }
+.nav-icon { font-size: 20px; margin-bottom: 3px; filter: grayscale(1) opacity(0.5); transition: filter 0.2s var(--ease), transform 0.15s var(--ease); }
+.nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text3); text-transform: uppercase; transition: color 0.2s var(--ease); }
 
 .nav-item.active .nav-label { color: var(--accent); }
-.nav-item.active .nav-icon { filter: none; }
+.nav-item.active .nav-icon { filter: none; transform: translateY(-1px); }
+/* Indicador ativo = Edge Light (filete em gradiente no topo) */
 .nav-item.active::before {
   content: '';
   position: absolute;
-  top: 0; left: 20%; right: 20%;
+  top: 0; left: 22%; right: 22%;
   height: 2px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   border-radius: 0 0 4px 4px;
 }
-.nav-item:active { background: var(--bg3); }
+.nav-item:active { transform: scale(0.94); }
 
 /* ===== SCREENS ===== */
 .screen { display: none; padding: 16px; min-height: 100%; }
@@ -169,24 +233,26 @@ html, body {
 
 /* Hero card */
 .hero-card {
-  background: var(--bg3);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  padding: 18px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 18px;
   margin-bottom: 12px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: var(--hairline), var(--shadow);
+  transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease);
 }
+/* Assinatura Edge Light no topo do herói */
 .hero-card::before {
   content: '';
   position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background: var(--accent);
+  left: 0; top: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
 }
-.hero-card:active { transform: scale(0.99); }
+.hero-card:active { transform: scale(0.99); box-shadow: var(--hairline), var(--shadow-lg); }
 
 .hero-label {
   font-family: 'Barlow Condensed', sans-serif;
@@ -199,10 +265,11 @@ html, body {
 }
 .hero-title {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 800;
   color: var(--text);
-  line-height: 1.1;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
   margin-bottom: 6px;
 }
 .hero-meta { font-size: 12px; color: var(--text3); }
@@ -210,24 +277,27 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 8px 16px;
+  padding: 10px 18px;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
   cursor: pointer;
-  margin-top: 12px;
+  margin-top: 14px;
+  transition: transform 0.12s var(--ease), box-shadow 0.2s var(--ease);
 }
+.hero-btn:active { transform: translateY(1px) scale(0.99); box-shadow: 0 4px 22px var(--accent-glow); }
 .hero-rest {
-  background: var(--bg3);
+  background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--hairline), var(--shadow-sm);
+  padding: 20px 16px;
   margin-bottom: 12px;
   text-align: center;
 }
@@ -244,23 +314,26 @@ html, body {
 }
 
 .stat-card {
-  background: var(--bg3);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 12px 10px;
+  box-shadow: var(--hairline), var(--shadow-sm);
+  padding: 14px 10px;
   text-align: center;
 }
 
 .stat-val {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 28px;
+  font-size: 36px;
   font-weight: 800;
   color: var(--accent);
   line-height: 1;
-  margin-bottom: 3px;
+  margin-bottom: 5px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
-.stat-label { font-size: 10px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-label { font-size: 10px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; line-height: 1.25; }
 
 /* Weekly progress bar */
 .week-progress-wrap {
@@ -286,6 +359,7 @@ html, body {
   font-weight: 800;
   color: var(--accent);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .week-progress-count span {
   font-size: 13px;
@@ -302,12 +376,12 @@ html, body {
 .week-progress-fill {
   height: 100%;
   border-radius: 6px;
-  background: linear-gradient(90deg, var(--accent), #fb923c);
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
 }
 .week-progress-fill.complete {
-  background: linear-gradient(90deg, var(--green), #4ade80);
+  background: linear-gradient(90deg, var(--green), color-mix(in srgb, var(--green) 65%, white));
 }
 .week-progress-segments {
   display: flex;
@@ -391,7 +465,7 @@ html, body {
   text-align: right;
   flex-shrink: 0;
 }
-.recent-weight { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; color: var(--accent); line-height: 1; }
+.recent-weight { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 800; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
 .recent-reps { font-size: 11px; color: var(--text3); margin-top: 1px; }
 
 .section-title {
@@ -406,14 +480,15 @@ html, body {
 
 /* ===== CARDIO SCREEN ===== */
 .cardio-day-card {
-  background: var(--bg3);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--hairline), var(--shadow-sm);
   margin-bottom: 8px;
   overflow: hidden;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s var(--ease);
 }
-.cardio-day-card.has-data { border-color: rgba(249,115,22,0.35); }
+.cardio-day-card.has-data { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
 .cardio-day-header {
   display: flex;
   align-items: center;
@@ -575,15 +650,16 @@ html, body {
   color: var(--text);
   border-radius: var(--radius-sm);
   padding: 10px 12px;
-  font-size: 22px;
+  font-size: 24px;
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 800;
   width: 90px;
   outline: none;
   text-align: center;
   -webkit-appearance: none;
+  font-variant-numeric: tabular-nums;
 }
-.cardio-time-input:focus { border-color: var(--accent); }
+.cardio-time-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
 .cardio-time-unit {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 14px;
@@ -592,11 +668,11 @@ html, body {
   letter-spacing: 1px;
 }
 .cardio-save-btn {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 11px;
+  padding: 12px;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -604,9 +680,9 @@ html, body {
   text-transform: uppercase;
   cursor: pointer;
   width: 100%;
-  transition: all 0.2s;
+  transition: transform 0.12s var(--ease), box-shadow 0.2s var(--ease);
 }
-.cardio-save-btn:active { transform: scale(0.98); filter: brightness(0.9); }
+.cardio-save-btn:active { transform: translateY(1px) scale(0.99); box-shadow: 0 4px 22px var(--accent-glow); }
 .cardio-clear-btn {
   background: transparent;
   border: 1px solid var(--border);
@@ -640,12 +716,13 @@ html, body {
 }
 
 .workout-card {
-  background: var(--bg3);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--hairline), var(--shadow-sm);
   padding: 16px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -663,15 +740,17 @@ html, body {
 }
 
 .workout-card.done::before { background: var(--green); }
-.workout-card:active { transform: scale(0.99); background: var(--bg4); }
+.workout-card:active { transform: scale(0.99); box-shadow: var(--hairline), var(--shadow); }
 
 .workout-num {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 32px;
+  font-size: 40px;
   font-weight: 800;
-  color: var(--border);
+  color: var(--text3);
   line-height: 1;
-  min-width: 30px;
+  min-width: 34px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .workout-card.done .workout-num { color: var(--green); opacity: 0.5; }
@@ -700,8 +779,8 @@ html, body {
 }
 
 .workout-card.today {
-  border-color: var(--accent);
-  background: linear-gradient(135deg, var(--bg3) 0%, rgba(249,115,22,0.06) 100%);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: linear-gradient(135deg, var(--bg3) 0%, color-mix(in srgb, var(--accent) 7%, var(--bg3)) 100%);
 }
 .workout-card.today::before { background: var(--accent); }
 
@@ -761,14 +840,18 @@ html, body {
   -ms-overflow-style: none;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
 .week-tabs::-webkit-scrollbar { display: none; }
 
 .week-tab {
   flex-shrink: 0;
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: var(--bg3);
   font-size: 12px;
   font-weight: 700;
   color: var(--text3);
@@ -776,13 +859,16 @@ html, body {
   font-family: 'Barlow Condensed', sans-serif;
   letter-spacing: 1px;
   text-transform: uppercase;
-  transition: all 0.2s;
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  transition: all 0.2s var(--ease);
 }
 
 .week-tab.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: transparent;
   color: white;
+  box-shadow: 0 0 14px var(--accent-glow);
 }
 
 /* Exercise List */
@@ -794,10 +880,12 @@ html, body {
 }
 
 .exercise-card {
-  background: var(--bg3);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--hairline), var(--shadow-sm);
   overflow: hidden;
+  transition: box-shadow 0.2s var(--ease);
 }
 
 .exercise-header {
@@ -888,6 +976,7 @@ html, body {
 
 .gym-input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 
 .gym-input::placeholder { color: var(--text3); }
@@ -918,11 +1007,11 @@ html, body {
 .series-toggle-btn:active { transform: scale(0.97); }
 
 .save-exercise-btn {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  padding: 11px;
+  padding: 12px;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 14px;
   font-weight: 700;
@@ -930,10 +1019,10 @@ html, body {
   text-transform: uppercase;
   cursor: pointer;
   width: 100%;
-  transition: all 0.2s;
+  transition: transform 0.12s var(--ease), box-shadow 0.2s var(--ease);
   margin-top: 4px;
 }
-.save-exercise-btn:active { transform: scale(0.98); filter: brightness(0.9); }
+.save-exercise-btn:active { transform: translateY(1px) scale(0.99); box-shadow: 0 4px 22px var(--accent-glow); }
 
 .mini-history {
   border-top: 1px solid var(--border);
@@ -991,9 +1080,10 @@ html, body {
 }
 
 .chart-card {
-  background: var(--bg3);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--hairline), var(--shadow-sm);
   padding: 16px;
   margin-bottom: 12px;
 }
@@ -1126,10 +1216,10 @@ html, body {
   width: 100%;
   margin-top: 4px;
 }
-.add-ex-btn:active { background: rgba(249,115,22,0.25); }
+.add-ex-btn:active { background: color-mix(in srgb, var(--accent) 25%, transparent); }
 
 .save-edits-btn {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   border: none;
   border-radius: var(--radius);
@@ -1142,9 +1232,9 @@ html, body {
   cursor: pointer;
   width: 100%;
   margin-top: 16px;
-  transition: all 0.2s;
+  transition: transform 0.12s var(--ease), box-shadow 0.2s var(--ease);
 }
-.save-edits-btn:active { filter: brightness(0.9); transform: scale(0.99); }
+.save-edits-btn:active { transform: translateY(1px) scale(0.99); box-shadow: 0 6px 24px var(--accent-glow); }
 
 /* ===== SETTINGS SCREEN ===== */
 .settings-section {
@@ -1229,23 +1319,29 @@ html, body {
 /* ===== TOAST ===== */
 #toast {
   position: fixed;
-  bottom: 90px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: var(--green);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
+  background: color-mix(in srgb, var(--bg2) 86%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  color: var(--text);
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-lg), inset 3px 0 0 var(--accent);
   font-weight: 700;
   font-size: 13px;
   z-index: 999;
   opacity: 0;
-  transition: all 0.3s;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease);
   pointer-events: none;
   white-space: nowrap;
   font-family: 'Barlow Condensed', sans-serif;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #toast { background: var(--bg4); }
 }
 #toast.show {
   opacity: 1;
@@ -1256,7 +1352,9 @@ html, body {
 #modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.55);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   z-index: 300;
   display: none;
   align-items: flex-end;
@@ -1266,8 +1364,9 @@ html, body {
 .modal-sheet {
   background: var(--bg2);
   border-top: 1px solid var(--border);
-  border-radius: 16px 16px 0 0;
-  padding: 20px 16px 32px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--shadow-lg);
+  padding: 22px 16px calc(32px + env(safe-area-inset-bottom, 0px));
   width: 100%;
   animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
 }
@@ -1379,9 +1478,10 @@ html, body {
   letter-spacing: 0.5px;
 }
 .auth-card {
-  background: var(--bg2);
+  background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--hairline), var(--shadow-lg);
   padding: 28px 24px;
   width: 100%;
   max-width: 400px;
@@ -1427,10 +1527,10 @@ html, body {
 .auth-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .auth-btn {
   width: 100%;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 14px;
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 16px;
@@ -1439,9 +1539,9 @@ html, body {
   text-transform: uppercase;
   cursor: pointer;
   margin-top: 6px;
-  transition: opacity 0.2s;
+  transition: transform 0.12s var(--ease), box-shadow 0.2s var(--ease);
 }
-.auth-btn:active { opacity: 0.8; }
+.auth-btn:active { transform: translateY(1px) scale(0.99); box-shadow: 0 6px 24px var(--accent-glow); }
 .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .auth-btn-secondary {
   width: 100%;
@@ -1528,8 +1628,8 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(249,115,22,0.1);
-  border: 1px solid rgba(249,115,22,0.3);
+  background: var(--accent-dim);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius: 20px;
   padding: 6px 14px;
   font-size: 12px;
@@ -1540,7 +1640,7 @@ html, body {
 }
 .auth-spinner {
   width: 16px; height: 16px;
-  border: 2px solid rgba(249,115,22,0.3);
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
@@ -1643,7 +1743,7 @@ html, body {
 .tutorial-actions { display: flex; gap: 10px; }
 .tutorial-btn-next {
   flex: 1;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: white;
   border: none;
   border-radius: 10px;
@@ -1653,7 +1753,9 @@ html, body {
   font-weight: 700;
   letter-spacing: 1px;
   cursor: pointer;
+  transition: transform 0.12s var(--ease), box-shadow 0.2s var(--ease);
 }
+.tutorial-btn-next:active { transform: translateY(1px) scale(0.99); box-shadow: 0 6px 24px var(--accent-glow); }
 .tutorial-btn-skip {
   background: none;
   border: 1px solid var(--border);
@@ -2184,8 +2286,16 @@ html, body {
       <!-- ⑥ SOBRE -->
       <div class="settings-section">
         <div class="settings-section-title">Sobre</div>
+        <button class="settings-btn" id="replay-tutorial-btn">
+          <span class="settings-btn-icon">🎓</span>
+          <div class="settings-btn-text">
+            <div class="settings-btn-title">Rever Tutorial</div>
+            <div class="settings-btn-sub">Ver de novo as dicas de uso do app</div>
+          </div>
+          <span class="settings-btn-arrow">›</span>
+        </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.3</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.4</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>
@@ -2391,7 +2501,7 @@ function checkStorageWarning() {
     const banner = document.createElement('div');
     banner.style.cssText = `
       position:fixed; top:0; left:0; right:0; z-index:9999;
-      background:#f97316; color:white; padding:10px 16px;
+      background:var(--accent); color:white; padding:10px 16px;
       font-size:12px; font-weight:700; font-family:'Barlow Condensed',sans-serif;
       letter-spacing:0.5px; text-align:center; line-height:1.4;
     `;
@@ -2665,7 +2775,7 @@ document.getElementById('training-done-btn').addEventListener('click', () => {
   if (inlineBtn) {
     inlineBtn.textContent = isDone ? '✅ Treino Concluído' : '✓ Concluir Treino';
     inlineBtn.style.borderColor = isDone ? 'var(--green)' : 'var(--accent)';
-    inlineBtn.style.background = isDone ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.08)';
+    inlineBtn.style.background = isDone ? 'rgba(34,197,94,0.1)' : 'var(--accent-dim)';
     inlineBtn.style.color = isDone ? 'var(--green)' : 'var(--accent)';
   }
   showToast(isDone ? 'Treino concluído! 🔥' : 'Marcação removida');
@@ -2685,7 +2795,7 @@ function toggleInlineDone() {
   if (inlineBtn) {
     inlineBtn.textContent = isDone ? '✅ Treino Concluído' : '✓ Concluir Treino';
     inlineBtn.style.borderColor = isDone ? 'var(--green)' : 'var(--accent)';
-    inlineBtn.style.background = isDone ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.08)';
+    inlineBtn.style.background = isDone ? 'rgba(34,197,94,0.1)' : 'var(--accent-dim)';
     inlineBtn.style.color = isDone ? 'var(--green)' : 'var(--accent)';
   }
   showToast(isDone ? 'Treino concluído! 🔥' : 'Marcação removida');
@@ -3088,13 +3198,13 @@ function renderExercises() {
       ? Math.round(lastWeightNum * warmupPct / 100 * 2) / 2  // arredonda pro 0.5 mais próximo
       : null;
     const warmupChip = warmupWeight !== null
-      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(249,115,22,0.12);color:var(--accent);border:1px solid rgba(249,115,22,0.3);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🔥 Aquec. ${warmupWeight}kg</span>`
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);border-radius:var(--radius-pill);padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🔥 Aquec. ${warmupWeight}kg</span>`
       : '';
 
-    // Recorde pessoal (maior peso já registrado neste exercício)
+    // Recorde pessoal (maior peso já registrado neste exercício) — selo premium no accent
     const pr = getExercisePR(activeWorkoutId, ex.id, null);
     const prChip = pr
-      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:rgba(234,179,8,0.12);color:#eab308;border:1px solid rgba(234,179,8,0.35);border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px">🏆 PR ${pr.weight}kg</span>`
+      ? `<span class="tnum" style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent);border-radius:var(--radius-pill);padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:0.3px;margin-left:6px;box-shadow:0 0 14px var(--accent-glow)">🏆 PR ${pr.weight}kg</span>`
       : '';
 
     // Series expand state — stored per-exercise in DOM via id
@@ -3209,7 +3319,7 @@ function renderExercises() {
     <button id="inline-done-btn"
       onclick="toggleInlineDone()"
       style="width:100%;margin-top:8px;padding:14px;border-radius:var(--radius);border:2px solid ${_isDoneAlready ? 'var(--green)' : 'var(--accent)'};
-        background:${_isDoneAlready ? 'rgba(34,197,94,0.1)' : 'rgba(249,115,22,0.08)'};
+        background:${_isDoneAlready ? 'rgba(34,197,94,0.1)' : 'var(--accent-dim)'};
         color:${_isDoneAlready ? 'var(--green)' : 'var(--accent)'};
         font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;letter-spacing:1px;
         text-transform:uppercase;cursor:pointer;transition:all 0.2s">
@@ -3665,10 +3775,10 @@ function renderCardioDashboard() {
         datasets: [{
           label: 'Minutos',
           data: minutesPerWeek,
-          backgroundColor: 'rgba(249,115,22,0.7)',
-          borderColor: '#f97316',
+          backgroundColor: chartTheme().accent,
+          borderColor: chartTheme().accent,
           borderWidth: 1,
-          borderRadius: 4
+          borderRadius: 6
         }]
       },
       options: chartOptions('Minutos', 'min')
@@ -3696,7 +3806,7 @@ function renderCardioDashboard() {
       const mixEntries = Object.entries(mixByType).filter(([, min]) => min > 0);
       const mixLabels = mixEntries.map(([type]) => getCardioLabel(type));
       const mixData = mixEntries.map(([, min]) => min);
-      const mixColors = ['#f97316','#3b82f6','#22c55e','#a855f7','#ec4899','#eab308','#06b6d4','#84cc16'];
+      const mixColors = [chartTheme().accent,'#3b82f6','#22c55e','#a855f7','#ec4899','#eab308','#06b6d4','#84cc16'];
       charts['cardio-mix'] = new Chart(document.getElementById('chart-cardio-mix'), {
         type: 'doughnut',
         data: {
@@ -3704,7 +3814,7 @@ function renderCardioDashboard() {
           datasets: [{
             data: mixData,
             backgroundColor: mixEntries.map((_, i) => mixColors[i % mixColors.length]),
-            borderColor: '#1a1a1a',
+            borderColor: chartTheme().surface,
             borderWidth: 3
           }]
         },
@@ -3715,12 +3825,14 @@ function renderCardioDashboard() {
             legend: {
               display: true,
               position: 'bottom',
-              labels: { color: '#a0a0a0', font: { size: 11 }, padding: 12 }
+              labels: { color: chartTheme().text2, font: { size: 11 }, padding: 12 }
             },
             tooltip: {
-              backgroundColor: '#1a1a1a',
-              borderColor: '#2a2a2a',
+              backgroundColor: chartTheme().surface,
+              borderColor: chartTheme().grid,
               borderWidth: 1,
+              padding: 10,
+              cornerRadius: 8,
               callbacks: { label: ctx => ` ${ctx.parsed} min` }
             }
           }
@@ -3847,7 +3959,7 @@ function renderDashboardCharts(workoutId, exerciseId) {
   content.innerHTML = `
     <div class="home-stats" style="margin-bottom:14px">
       <div class="stat-card">
-        <div class="stat-val" style="color:#eab308">${prAll ? prAll.weight + 'kg' : '—'}</div>
+        <div class="stat-val tnum" style="color:var(--accent)">${prAll ? prAll.weight + 'kg' : '—'}</div>
         <div class="stat-label">🏆 Recorde${prAll ? '<br>Sem ' + prAll.week : '<br>Pessoal'}</div>
       </div>
       <div class="stat-card">
@@ -3881,8 +3993,8 @@ function renderDashboardCharts(workoutId, exerciseId) {
         datasets: [{
           label: 'Peso (kg)',
           data: weights,
-          borderColor: '#f97316',
-          backgroundColor: 'rgba(249,115,22,0.1)',
+          borderColor: chartTheme().accent,
+          backgroundColor: chartTheme().accentDim,
           tension: 0.4,
           spanGaps: true,
           pointRadius: 5,
@@ -3935,19 +4047,37 @@ function renderDashboardCharts(workoutId, exerciseId) {
   }, 50);
 }
 
+// Lê as CSS vars atuais para os gráficos seguirem o tema escolhido
+function chartTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  const v = (n, fb) => (cs.getPropertyValue(n).trim() || fb);
+  return {
+    accent:   v('--accent', '#f97316'),
+    accent2:  v('--accent2', '#fb923c'),
+    accentDim:v('--accent-dim', 'rgba(249,115,22,0.15)'),
+    grid:     v('--border', '#2a2a2a'),
+    text2:    v('--text2', '#a0a0a0'),
+    text:     v('--text', '#f0f0f0'),
+    surface:  v('--bg2', '#111111'),
+  };
+}
+
 function chartOptions(yLabel, unit) {
   const u = unit || (yLabel === 'Peso (kg)' ? 'kg' : 'reps');
+  const t = chartTheme();
   return {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1a1a1a',
-        borderColor: '#2a2a2a',
+        backgroundColor: t.surface,
+        borderColor: t.grid,
         borderWidth: 1,
-        titleColor: '#f97316',
-        bodyColor: '#f0f0f0',
+        titleColor: t.accent,
+        bodyColor: t.text,
+        padding: 10,
+        cornerRadius: 8,
         callbacks: {
           label: ctx => ` ${ctx.parsed.y !== null ? ctx.parsed.y : '—'} ${u}`
         }
@@ -3955,12 +4085,12 @@ function chartOptions(yLabel, unit) {
     },
     scales: {
       x: {
-        grid: { color: '#2a2a2a' },
-        ticks: { color: '#606060', font: { size: 11 } }
+        grid: { color: t.grid },
+        ticks: { color: t.text2, font: { size: 11 } }
       },
       y: {
-        grid: { color: '#2a2a2a' },
-        ticks: { color: '#606060', font: { size: 11 } },
+        grid: { color: t.grid },
+        ticks: { color: t.text2, font: { size: 11 } },
         title: { display: false }
       }
     }
@@ -4629,6 +4759,8 @@ document.getElementById('reset-week-btn').addEventListener('click', () => {
   }
 });
 
+document.getElementById('replay-tutorial-btn').addEventListener('click', startTutorial);
+
 // ============================================================
 // TOAST
 // ============================================================
@@ -4658,7 +4790,7 @@ const ACCENT_THEMES = [
 ];
 
 const BG_THEMES = [
-  { name: 'Preto',      bg: '#0a0a0a', bg2: '#111111', bg3: '#1a1a1a', bg4: '#222222', border: '#2a2a2a', text: '#f0f0f0', text2: '#a0a0a0', text3: '#606060' },
+  { name: 'Preto',      bg: '#060607', bg2: '#0d0e10', bg3: '#131417', bg4: '#1b1d21', border: '#232529', text: '#f0f0f0', text2: '#a0a0a0', text3: '#606060' },
   { name: 'Carvão',     bg: '#0d0d0d', bg2: '#161616', bg3: '#202020', bg4: '#2a2a2a', border: '#333333', text: '#f0f0f0', text2: '#a0a0a0', text3: '#666666' },
   { name: 'Azul Escuro',bg: '#050b14', bg2: '#0a1628', bg3: '#0f1f38', bg4: '#162844', border: '#1e3a5c', text: '#e8f0fe', text2: '#8ab0d0', text3: '#4a6a8a' },
   { name: 'Verde Escuro',bg: '#050d08', bg2: '#091410', bg3: '#0f1f14', bg4: '#162a1a', border: '#1e3a22', text: '#e8f5e9', text2: '#7ab88a', text3: '#3a6840' },
@@ -4678,6 +4810,23 @@ function applyAccentTheme(theme) {
   renderThemeSwatches();
 }
 
+// Tokens de elevação dependem do fundo: no escuro o realce é luz branca vinda de
+// cima; no Claro vira sombra escura, senão "some". Por isso são definidos por tema.
+function applyElevationTokens(theme) {
+  const root = document.documentElement;
+  const light = theme.name === 'Claro';
+  root.classList.toggle('light-bg', light);
+  root.style.setProperty('--hairline', light
+    ? 'inset 0 1px 0 rgba(0,0,0,0.05)'
+    : 'inset 0 1px 0 rgba(255,255,255,0.04)');
+  root.style.setProperty('--card-bg', light
+    ? 'linear-gradient(180deg, ' + theme.bg2 + ', ' + theme.bg3 + ')'
+    : 'linear-gradient(180deg, color-mix(in srgb, ' + theme.bg3 + ' 100%, white 3%), ' + theme.bg3 + ')');
+  root.style.setProperty('--shadow-sm', light ? '0 1px 2px rgba(0,0,0,0.08)'    : '0 1px 2px rgba(0,0,0,0.4)');
+  root.style.setProperty('--shadow',    light ? '0 8px 24px -8px rgba(0,0,0,0.12)'  : '0 8px 24px -8px rgba(0,0,0,0.55)');
+  root.style.setProperty('--shadow-lg', light ? '0 16px 40px -12px rgba(0,0,0,0.16)' : '0 16px 40px -12px rgba(0,0,0,0.6)');
+}
+
 function applyBgTheme(theme) {
   const root = document.documentElement;
   root.style.setProperty('--bg',     theme.bg);
@@ -4688,6 +4837,10 @@ function applyBgTheme(theme) {
   root.style.setProperty('--text',   theme.text);
   root.style.setProperty('--text2',  theme.text2);
   root.style.setProperty('--text3',  theme.text3);
+  applyElevationTokens(theme);
+  // Atualiza a cor da barra de status do iOS para combinar com o fundo
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme.bg);
   state.bgTheme = theme.name;
   saveState();
   renderThemeSwatches();
@@ -4758,6 +4911,9 @@ function loadSavedTheme() {
       root.style.setProperty('--text',   t.text);
       root.style.setProperty('--text2',  t.text2);
       root.style.setProperty('--text3',  t.text3);
+      applyElevationTokens(t);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', t.bg);
     }
   }
 }
@@ -4816,8 +4972,9 @@ function showAuthOverlay() {
 function hideAuthOverlay() {
   document.getElementById('auth-overlay').classList.remove('active');
   document.getElementById('btn-logout-app').style.display = 'inline-block';
-  // Mostrar tutorial se for a primeira vez
-  if (!Storage.get('ironcheck_tutorial_done')) {
+  // Mostrar tutorial apenas na primeira vez — flag fica no state (sincronizada),
+  // com fallback para a chave antiga de localStorage (usuários anteriores)
+  if (!state.tutorialDone && !Storage.get('ironcheck_tutorial_done')) {
     setTimeout(startTutorial, 400);
   }
 }
@@ -5162,10 +5319,10 @@ function updateSettingsUI() {
   if (btnC && btnS && desc) {
     const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f97316';
     const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#333';
-    btnC.style.background = mode === 'complete' ? 'rgba(249,115,22,0.15)' : 'var(--bg4)';
+    btnC.style.background = mode === 'complete' ? 'var(--accent-dim)' : 'var(--bg4)';
     btnC.style.borderColor = mode === 'complete' ? 'var(--accent)' : 'var(--border)';
     btnC.style.color = mode === 'complete' ? 'var(--accent)' : 'var(--text2)';
-    btnS.style.background = mode === 'simple' ? 'rgba(249,115,22,0.15)' : 'var(--bg4)';
+    btnS.style.background = mode === 'simple' ? 'var(--accent-dim)' : 'var(--bg4)';
     btnS.style.borderColor = mode === 'simple' ? 'var(--accent)' : 'var(--border)';
     btnS.style.color = mode === 'simple' ? 'var(--accent)' : 'var(--text2)';
     desc.textContent = mode === 'complete'
@@ -5296,7 +5453,9 @@ function renderTutorialStep() {
 
 function closeTutorial() {
   document.getElementById('tutorial-overlay').classList.remove('active');
-  Storage.set('ironcheck_tutorial_done', '1');
+  state.tutorialDone = true;
+  saveState(); // sincroniza para não reaparecer aqui nem em outros dispositivos
+  Storage.set('ironcheck_tutorial_done', '1'); // compat com versão antiga
 }
 
 document.getElementById('tutorial-next').addEventListener('click', () => {
@@ -5314,6 +5473,12 @@ document.getElementById('tutorial-skip').addEventListener('click', closeTutorial
 // INIT
 // ============================================================
 loadState();
+// Migração: quem já viu o tutorial (flag antiga em localStorage) não deve revê-lo —
+// promove para o state sincronizado
+if (!state.tutorialDone && Storage.get('ironcheck_tutorial_done')) {
+  state.tutorialDone = true;
+  saveState();
+}
 loadSavedTheme();
 // Auto-compute week from plan date on load — only if no existing log data
 if (state.planStartDate) {

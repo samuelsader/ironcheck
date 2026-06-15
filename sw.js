@@ -2,7 +2,7 @@
 // Estratégia: network-first com fallback para cache.
 // Assim o app sempre pega a versão mais nova quando há internet (importante,
 // porque o deploy é upload manual do index.html), mas continua abrindo offline.
-const CACHE = 'ironcheck-v2.9';
+const CACHE = 'ironcheck-v3.0';
 const APP_SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {

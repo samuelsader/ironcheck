@@ -185,10 +185,11 @@ html, body {
   border-top: none;
   box-shadow: 0 -1px 0 var(--border);
   flex-shrink: 0;
-  /* Respiro horizontal pra Home/Config não encostarem nas bordas/cantos arredondados
-     (o "espremer" pedido). Sem viewport-fit=cover o iOS já posiciona a nav no lugar
-     certo verticalmente, então só o padding lateral basta. */
-  padding: 0 14px env(safe-area-inset-bottom, 0px);
+  /* Folga contra os cantos ARREDONDADOS da tela (iPhone 17 Pro tem cantos bem curvos):
+     18px nas laterais afasta Home/Config das bordas, e ~10px embaixo tira os rótulos
+     da zona onde a curva do canto "morde". Combinado com rótulos um pouco menores
+     (.nav-label), tudo cabe sem apertar. */
+  padding: 0 18px calc(10px + env(safe-area-inset-bottom, 0px));
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   #nav { background: var(--bg2); }
@@ -200,14 +201,14 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 4px 7px;
+  padding: 8px 2px 6px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
 }
 
 .nav-icon { font-size: 20px; margin-bottom: 3px; filter: grayscale(1) opacity(0.5); transition: filter 0.2s var(--ease), transform 0.15s var(--ease); }
-.nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; color: var(--text3); text-transform: uppercase; transition: color 0.2s var(--ease); }
+.nav-label { font-size: 9px; font-weight: 700; letter-spacing: 0.3px; color: var(--text3); text-transform: uppercase; transition: color 0.2s var(--ease); }
 
 .nav-item.active .nav-label { color: var(--accent); }
 .nav-item.active .nav-icon { filter: none; transform: translateY(-1px); }
@@ -2273,7 +2274,7 @@ html, body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.9</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v3.0</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>

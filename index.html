@@ -94,13 +94,16 @@ html, body {
 .edge-light.is-active::after { opacity: 1; }
 
 /* ===== LAYOUT ===== */
+/* position:fixed + inset:0 cobre a tela INTEIRA de forma garantida (inclusive a
+   faixa do indicador de gestos do iPhone), eliminando qualquer faixa de fundo que
+   aparecia abaixo do app quando 100dvh ficava mais curto que a tela. */
 #app {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  position: fixed;
+  top: 0; bottom: 0; left: 0; right: 0;
   max-width: 480px;
   margin: 0 auto;
-  position: relative;
 }
 
 /* ===== HEADER ===== */
@@ -2277,7 +2280,7 @@ html, body {
           <span class="settings-btn-arrow">›</span>
         </button>
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;color:var(--text2);font-size:13px;line-height:1.6">
-          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.5</strong><br>
+          <strong style="color:var(--accent);font-family:'Barlow Condensed',sans-serif;font-size:16px;letter-spacing:1px">IRONCHECK v2.6</strong><br>
           App pessoal de controle de musculação.<br>
           Dados salvos no navegador e sincronizados na nuvem.
         </div>
